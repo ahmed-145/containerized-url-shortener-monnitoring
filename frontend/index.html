@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener - DEPI Project</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                <h1>URL Shortener</h1>
+            </div>
+            <p class="subtitle">Create short, memorable links in seconds</p>
+        </header>
+
+        <!-- Main Form -->
+        <div class="card main-card">
+            <form id="shortenForm">
+                <div class="form-group">
+                    <label for="urlInput">Enter your long URL</label>
+                    <input 
+                        type="url" 
+                        id="urlInput" 
+                        placeholder="https://example.com/very/long/url/here"
+                        required
+                    >
+                    <small class="validation-hint" id="validationHint"></small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customCode">Custom short code (optional)</label>
+                    <div class="custom-code-input">
+                        <span class="domain-prefix">short.link/</span>
+                        <input 
+                            type="text" 
+                            id="customCode" 
+                            placeholder="my-link"
+                            pattern="[a-zA-Z0-9-_]{2,20}"
+                        >
+                    </div>
+                    <small class="hint">2-20 characters: letters, numbers, hyphens, underscores</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="shortenBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                    Shorten URL
+                </button>
+            </form>
+
+            <!-- Result Display -->
+            <div id="result" class="result hidden">
+                <div class="result-header">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <h3>Your shortened URL is ready!</h3>
+                </div>
+                <div class="result-content">
+                    <div class="short-url-display">
+                        <input type="text" id="shortUrlText" readonly>
+                        <button class="btn btn-secondary" id="copyBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy
+                        </button>
+                        <button class="btn btn-secondary" id="qrBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            QR Code
+                        </button>
+                    </div>
+                    <div class="result-details">
+                        <p><strong>Original:</strong> <span id="originalUrl"></span></p>
+                        <p><strong>Short Code:</strong> <span id="shortCode"></span></p>
+                    </div>
+                    <div id="qrCodeContainer" class="qr-code-container hidden">
+                        <h4>QR Code</h4>
+                        <img id="qrCodeImage" alt="QR Code">
+                        <button class="btn btn-secondary" id="downloadQrBtn">Download QR Code</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Upload Section -->
+        <div class="card bulk-card">
+            <h2>📋 Bulk URL Shortening</h2>
+            <p class="bulk-description">Upload a CSV file with multiple URLs to shorten them all at once</p>
+            
+            <div class="bulk-upload-area" id="bulkUploadArea">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <p>Drop CSV file here or click to browse</p>
+                <small>CSV format: url,code (optional)</small>
+                <input type="file" id="csvFileInput" accept=".csv" hidden>
+            </div>
+            
+            <div id="bulkResult" class="bulk-result hidden">
+                <h3>✅ Processing Complete!</h3>
+                <div class="bulk-stats">
+                    <div class="bulk-stat">
+                        <span class="stat-number" id="successCount">0</span>
+                        <span class="stat-label">Successful</span>
+                    </div>
+                    <div class="bulk-stat">
+                        <span class="stat-number" id="failedCount">0</span>
+                        <span class="stat-label">Failed</span>
+                    </div>
+                    <div class="bulk-stat">
+                        <span class="stat-number" id="totalCount">0</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="downloadResultBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download Results CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Dashboard -->
+        <div class="stats-section">
+            <h2>Recent URLs</h2>
+            <div id="urlsList" class="urls-list">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
