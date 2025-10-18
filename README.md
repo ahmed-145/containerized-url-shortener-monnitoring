@@ -38,13 +38,14 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
 
 **Team Size:** 5 Members
 
-| Team Member | Primary Role | Responsibilities |
-|-------------|--------------|------------------|
-| **Ahmed Mahmoud** | Backend & API Development | - Express routes implementation<br>- SQLite database integration<br>- Metrics endpoint exposure<br>- API business logic |
-| **Mohamed Abd ElKader** | Containerization & Infrastructure | - Dockerfile creation<br>- docker-compose.yml configuration<br>- Docker volumes setup<br>- Container orchestration |
-| **Tasnim** | Monitoring & Visualization | - Prometheus configuration<br>- Grafana dashboard design<br>- Alert rule creation<br>- Metrics visualization |
-| **Ahmed Hany** | Testing & Integration | - End-to-end testing<br>- Persistence validation<br>- Integration testing<br>- Demo preparation |
-| **Mohamed Ashraf** | Documentation & Delivery | - README documentation<br>- API documentation<br>- Dashboard exports<br>- Final presentation preparation |
+| Team Member             | Primary Role                        | Responsibilities                                                                                                                                                                              |
+| ----------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ahmed Mahmoud**       | Backend & DevOps Engineer           | - API and backend architecture design<br>- Express and SQLite implementation<br>- Dockerfile and docker-compose setup<br>- Prometheus & Grafana integration<br>- CI/CD pipeline configuration |
+| **Mohamed Abd ElKader** | Infrastructure Engineer             | - Container networking setup<br>- Volume management and environment configuration<br>- Service orchestration<br>- Resource optimization                                                       |
+| **Tasnim**              | Monitoring & Visualization Engineer | - Prometheus configuration<br>- Grafana dashboard creation<br>- Alert rules and performance metrics<br>- Data visualization and monitoring setup                                              |
+| **Ahmed Hany**          | Quality & Integration Engineer      | - Testing API endpoints and persistence<br>- Integration and load testing<br>- Debugging and performance validation<br>- Final demo and verification                                          |
+| **Mohamed Ashraf**      | Documentation & Delivery Lead       | - README and API documentation<br>- Architecture diagrams and dashboard exports<br>- Presentation materials<br>- Final delivery preparation                                                   |
+
 
 **Note:** Roles may shift during execution based on project needs and task dependencies.
 
@@ -120,19 +121,34 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
   - Setup initial docker-compose.yml
 
 - **Key Tasks:**
-  - [ ] Initialize Node.js project with Express
-  - [ ] Implement POST `/shorten` endpoint
-  - [ ] Implement GET `/:code` redirect endpoint
-  - [ ] Configure SQLite database connection
-  - [ ] Write Dockerfile for application
-  - [ ] Create docker-compose.yml for app service
-  - [ ] Test locally running containerized service
+   - [x] Initialize Node.js project with Express
+   - [x] Implement POST `/shorten` endpoint
+   - [x] Implement GET `/:code` redirect endpoint
+   - [x] Configure SQLite database connection
+   - [x] Write Dockerfile for application
+   - [x] Create docker-compose.yml for app service
+   - [x] Test locally running containerized service
 
 - **Deliverables:**
   - Functional URL shortener with source code
   - Working Dockerfile
   - docker-compose.yml (app only)
   - Local testing confirmation
+
+##### **🎁 Week 1 Bonus Features** (Optional Enhancements)
+
+| Bonus Feature | Effort | Impact | Status |
+|---|---|---|---|
+| **Beautiful Responsive Frontend UI** | 2 hours | ⭐⭐⭐ High | ✅ Complete |
+| **Additional API Endpoints** (list, stats, delete) | 1.5 hours | ⭐⭐⭐ High | ✅ Complete |
+| **Custom Short Code Support** | 1 hour | ⭐⭐ Medium | ✅ Complete |
+| **Click/Redirect Tracking** | 2 hours | ⭐⭐⭐ High | ✅ Complete |
+| **QR Code Generation** | 30 min | ⭐⭐⭐ High | ✅ Complete |
+| **URL Validation with Preview** | 20 min | ⭐⭐ Medium | ✅ Complete |
+| **Bulk URL Shortening (CSV Upload)** | 30 min | ⭐⭐⭐ High | ✅ Complete |
+| **Non-root Docker Users** (security) | 15 min | ⭐ Low | ✅ Complete |
+
+---
 
 #### **Week 2: Instrumentation with Prometheus** (10/20/2025 - 10/26/2025)
 - **Objectives:**
@@ -158,6 +174,18 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
   - Updated docker-compose.yml (app + Prometheus)
   - Verified custom metrics in Prometheus
 
+##### **🎁 Week 2 Bonus Features** (Optional Enhancements)
+
+| Bonus Feature | Effort | Impact | Status |
+|---|---|---|---|
+| **Custom Business Metrics** (top domains, hourly requests) | 1 hour | ⭐⭐⭐ High | ⬜ Not Started |
+| **Real-time Metrics Dashboard on Frontend** | 1.5 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Metrics Export to JSON** | 30 min | ⭐⭐ Medium | ⬜ Not Started |
+| **Custom Prometheus Exporter** | 2 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Multi-stage Docker Builds** (optimization) | 30 min | ⭐⭐ Medium | ⬜ Not Started |
+
+---
+
 #### **Week 3: Grafana Dashboards** (10/27/2025 - 11/02/2025)
 - **Objectives:**
   - Setup Grafana service
@@ -182,6 +210,19 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
   - Real-time metrics visualization
   - Dashboard JSON export
 
+##### **🎁 Week 3 Bonus Features** (Optional Enhancements)
+
+| Bonus Feature | Effort | Impact | Status |
+|---|---|---|---|
+| **Multiple Dashboards** (Operations, Business, Executive) | 2 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Dashboard Annotations** (deployments, incidents) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Dashboard Variables** (filters, time ranges) | 1.5 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Embed Grafana in Frontend** (iframe integration) | 1 hour | ⭐⭐⭐ High | ⬜ Not Started |
+| **Dark/Light Theme Toggle** | 30 min | ⭐ Low | ⬜ Not Started |
+| **PDF Report Generation** | 2 hours | ⭐⭐⭐ High | ⬜ Not Started |
+
+---
+
 #### **Week 4: Alerts, Persistence & Documentation** (11/03/2025 - 11/09/2025)
 - **Objectives:**
   - Configure alerting rules
@@ -192,7 +233,7 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
 - **Key Tasks:**
   - [ ] Create Grafana alert: High latency threshold
   - [ ] Create Grafana alert: Elevated 404 rate
-  - [ ] Add Docker volume: SQLite database
+  - [x] Add Docker volume: SQLite database
   - [ ] Add Docker volume: Prometheus data
   - [ ] Add Docker volume: Grafana data
   - [ ] Test persistence after container restart
@@ -209,6 +250,19 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
   - Complete project documentation
   - API documentation
   - Final presentation deck
+
+##### **🎁 Week 4 Bonus Features** (Optional Enhancements)
+
+| Bonus Feature | Effort | Impact | Status |
+|---|---|---|---|
+| **Multi-Channel Alerting** (Slack, Email, Discord) | 1.5 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Alert Testing Framework** (trigger intentional failures) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Disaster Recovery Plan** (backup & restore procedures) | 1.5 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **CI/CD Pipeline** (GitHub Actions) | 2 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Infrastructure as Code** (Terraform/Ansible) | 3 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Load Testing Report** (K6 or Apache Bench) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Security Audit Report** (docker scan, npm audit) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Postman Collection** (API documentation) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
 
 #### **Final Week: Testing & Presentation** (11/10/2025 - 11/20/2025)
 - Final integration testing
@@ -427,7 +481,7 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
 
 ### Prerequisites
 - Docker (version 20.10+)
-- Docker Compose (version 2.0+)
+- Docker Compose (version 3.7+)
 - Git
 
 ### Installation
