@@ -483,40 +483,31 @@ rate(database_size_bytes[5m]) * 60
 
 ---
 
-## 📚 Documentation
-
-- **Week 1 Documentation:** [docs/WEEK1.md](docs/WEEK1.md)
-- **Week 2 Documentation:** [docs/WEEK2.md](docs/WEEK2.md)
-- **API Documentation:** [docs/API.md](docs/API.md)
-- **Troubleshooting Guide:** [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
-
----
-
-## 🏆 Key Achievements
-
-### Technical Excellence
-- ✅ Production-ready monitoring infrastructure
-- ✅ Real-time observability with custom metrics
-- ✅ Comprehensive business intelligence tracking
-- ✅ Optimized Docker images (60% size reduction)
-- ✅ Security best practices (non-root users, input validation)
-
-### Beyond Requirements
-- ✅ 150% of Week 1 requirements delivered
-- ✅ 200% of Week 2 requirements delivered
-- ✅ Beautiful responsive frontend dashboard
-- ✅ Advanced metrics (domain tracking, hourly patterns)
-- ✅ JSON metrics export for integrations
-
----
-
 ## 📞 Contact & Support
 
 For questions or issues related to this project:
 
-- **Project Lead:** Ahmed Mahmoud
+**Team Members:**
+- **Project Lead:** Ahmed Mahmoud - Backend & DevOps Engineer
+- **Infrastructure:** Mohamed Abd ElKader - Infrastructure Engineer
+- **Monitoring:** Tasnim - Monitoring & Visualization Engineer
+- **Testing:** Ahmed Hany - Quality & Integration Engineer
+- **Documentation:** Mohamed Ashraf - Documentation & Delivery Lead
+
+**Project Resources:**
 - **GitHub Repository:** [containerized-url-shortener-monitoring](https://github.com/ahmed-145/containerized-url-shortener-monitoring)
 - **Documentation:** See `/docs` directory
+- **Issues & Bug Reports:** GitHub Issues tab
+
+---
+
+## 📚 Additional Resources
+
+- **GitHub Repository:** https://github.com/ahmed-145/containerized-url-shortener-monitoring
+- **Week 1 Documentation:** `/docs/WEEK1.md`
+- **Week 2 Documentation:** `/docs/WEEK2.md`
+- **API Documentation:** `/docs/API.md`
+- **Troubleshooting Guide:** `/docs/TROUBLESHOOTING.md`
 
 ---
 
