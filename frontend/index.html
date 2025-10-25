@@ -158,3 +158,72 @@
     <script src="app.js"></script>
 </body>
 </html>
+
+
+
+<!-- Real-time Metrics Dashboard (BONUS) -->
+        <div class="card metrics-card">
+            <h2>📊 Real-time Metrics</h2>
+            <p class="metrics-description">Live statistics from your URL shortener service</p>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-icon">🔗</div>
+                    <div class="metric-value" id="totalUrlsMetric">-</div>
+                    <div class="metric-label">Total URLs</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">✅</div>
+                    <div class="metric-value" id="successfulRedirectsMetric">-</div>
+                    <div class="metric-label">Successful Redirects</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">❌</div>
+                    <div class="metric-value" id="failedLookupsMetric">-</div>
+                    <div class="metric-label">Failed Lookups</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-value" id="avgLatencyMetric">-</div>
+                    <div class="metric-label">Avg Latency (ms)</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">📈</div>
+                    <div class="metric-value" id="clickThroughRateMetric">-</div>
+                    <div class="metric-label">Click-Through Rate</div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-icon">🔄</div>
+                    <div class="metric-value" id="activeConnectionsMetric">-</div>
+                    <div class="metric-label">Active Connections</div>
+                </div>
+            </div>
+            
+            <div class="metrics-footer">
+                <span class="metrics-status" id="metricsStatus">
+                    <span class="status-indicator"></span>
+                    Connected
+                </span>
+                <span class="metrics-update">Last updated: <span id="lastUpdateTime">Never</span></span>
+                <button class="btn btn-secondary btn-small" id="refreshMetricsBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+            
+            <div class="metrics-charts">
+                <h3>Top Domains Shortened</h3>
+                <div id="topDomainsChart" class="domain-chart">
+                    <p class="loading">Loading domain statistics...</p>
+                </div>
+            </div>
+        </div>

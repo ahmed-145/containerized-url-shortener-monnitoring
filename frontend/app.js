@@ -40,7 +40,6 @@ let validationTimeout;
 urlInput.addEventListener('input', async () => {
   const url = urlInput.value.trim();
   
-  // Clear previous timeout
   clearTimeout(validationTimeout);
   
   if (!url) {
@@ -48,7 +47,6 @@ urlInput.addEventListener('input', async () => {
     return;
   }
   
-  // Debounce validation (wait 500ms after typing stops)
   validationTimeout = setTimeout(async () => {
     try {
       const response = await fetch(`${API_URL}/api/validate-url`, {
@@ -60,10 +58,10 @@ urlInput.addEventListener('input', async () => {
       const result = await response.json();
       
       if (result.valid) {
-        urlInput.style.borderColor = '#10b981'; // Green
+        urlInput.style.borderColor = '#10b981';
         urlInput.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
       } else {
-        urlInput.style.borderColor = '#ef4444'; // Red
+        urlInput.style.borderColor = '#ef4444';
         urlInput.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
       }
     } catch (error) {
@@ -71,42 +69,41 @@ urlInput.addEventListener('input', async () => {
     }
   }, 500);
 
-  // After URL validation, check if already shortened
-const checkResponse = await fetch(`${API_URL}/api/check-existing`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ url })
-});
+  // Check if already shortened
+  const checkResponse = await fetch(`${API_URL}/api/check-existing`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
 
-const existing = await checkResponse.json();
+  const existing = await checkResponse.json();
 
-if (existing.exists) {
-  const reuse = confirm(
-    `This URL was already shortened as: ${existing.shortUrl}\n\n` +
-    `Created: ${existing.createdAt}\n` +
-    `Clicks: ${existing.clicks}\n\n` +
-    `Do you want to reuse this code instead of creating a new one?`
-  );
-  
-  if (reuse) {
-    displayResult({
-      success: true,
-      shortCode: existing.shortCode,
-      shortUrl: existing.shortUrl,
-      originalUrl: url
-    });
-    showToast('Reusing existing short URL!', 'success');
-    urlInput.value = '';
-    customCodeInput.value = '';
-    return;
+  if (existing.exists) {
+    const reuse = confirm(
+      `This URL was already shortened as: ${existing.shortUrl}\n\n` +
+      `Created: ${existing.createdAt}\n` +
+      `Clicks: ${existing.clicks}\n\n` +
+      `Do you want to reuse this code instead of creating a new one?`
+    );
+    
+    if (reuse) {
+      displayResult({
+        success: true,
+        shortCode: existing.shortCode,
+        shortUrl: existing.shortUrl,
+        originalUrl: url
+      });
+      showToast('Reusing existing short URL!', 'success');
+      urlInput.value = '';
+      customCodeInput.value = '';
+      return;
+    }
   }
-}
 });
-
-
 
 function formatDate(dateString) {
-  const date = new Date(dateString);
+  // SQLite stores UTC timestamps, treat them as UTC
+  const date = new Date(dateString + ' UTC');
   const now = new Date();
   const diffMs = now - date;
   const diffMins = Math.floor(diffMs / 60000);
@@ -208,12 +205,10 @@ async function uploadCSV(file) {
       throw new Error('Failed to process CSV');
     }
     
-    // Get the CSV result
     resultCsvData = await response.text();
     
-    // Parse to count successes/failures
     const lines = resultCsvData.split('\n');
-    const dataLines = lines.slice(1).filter(line => line.trim()); // Skip header
+    const dataLines = lines.slice(1).filter(line => line.trim());
     
     let success = 0;
     let failed = 0;
@@ -223,13 +218,11 @@ async function uploadCSV(file) {
       else if (line.includes(',failed')) failed++;
     });
     
-    // Show results
     successCount.textContent = success;
     failedCount.textContent = failed;
     totalCount.textContent = success + failed;
     bulkResult.classList.remove('hidden');
     
-    // Reset upload area
     bulkUploadArea.innerHTML = `
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -241,7 +234,6 @@ async function uploadCSV(file) {
       <input type="file" id="csvFileInput" accept=".csv" hidden>
     `;
     
-    // Re-attach event listener
     const newFileInput = document.getElementById('csvFileInput');
     newFileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
@@ -249,14 +241,11 @@ async function uploadCSV(file) {
     });
     
     showToast(`Processed ${success + failed} URLs successfully!`, 'success');
-    
-    // Refresh URL list
     fetchUrls();
     
   } catch (error) {
     showToast(error.message, 'error');
     
-    // Reset upload area on error
     bulkUploadArea.innerHTML = `
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -364,14 +353,8 @@ function displayResult(data) {
   originalUrlSpan.textContent = data.originalUrl;
   shortCodeSpan.textContent = data.shortCode;
   resultDiv.classList.remove('hidden');
-  
-  // Hide QR code when showing new result
   qrCodeContainer.classList.add('hidden');
-  
-  // Store current short code for QR generation
   qrBtn.dataset.shortCode = data.shortCode;
-  
-  // Scroll to result
   resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -387,7 +370,6 @@ shortenForm.addEventListener('submit', async (e) => {
     return;
   }
   
-  // Validate URL before submitting
   try {
     const validateResponse = await fetch(`${API_URL}/api/validate-url`, {
       method: 'POST',
@@ -406,7 +388,6 @@ shortenForm.addEventListener('submit', async (e) => {
     console.error('Validation error:', error);
   }
   
-  
   shortenBtn.disabled = true;
   shortenBtn.innerHTML = `
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
@@ -420,12 +401,8 @@ shortenForm.addEventListener('submit', async (e) => {
     const result = await shortenUrl(url, customCode);
     displayResult(result);
     showToast('URL shortened successfully!', 'success');
-    
-    // Reset form
     urlInput.value = '';
     customCodeInput.value = '';
-    
-    // Refresh URL list
     fetchUrls();
   } catch (error) {
     showToast(error.message, 'error');
@@ -445,14 +422,12 @@ shortenForm.addEventListener('submit', async (e) => {
 copyBtn.addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(shortUrlText.value);
-    
     copyBtn.innerHTML = `
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="20 6 9 17 4 12"></polyline>
       </svg>
       Copied!
     `;
-    
     setTimeout(() => {
       copyBtn.innerHTML = `
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -462,14 +437,12 @@ copyBtn.addEventListener('click', async () => {
         Copy
       `;
     }, 2000);
-    
     showToast('Copied to clipboard!', 'success');
   } catch (error) {
     showToast('Failed to copy', 'error');
   }
 });
 
-// QR Code button handler
 qrBtn.addEventListener('click', async () => {
   const shortCode = qrBtn.dataset.shortCode;
   if (!shortCode) {
@@ -493,10 +466,7 @@ qrBtn.addEventListener('click', async () => {
     const data = await response.json();
     qrCodeImage.src = data.qrCode;
     qrCodeContainer.classList.remove('hidden');
-    
-    // Scroll to QR code
     qrCodeContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    
     showToast('QR Code generated!', 'success');
   } catch (error) {
     showToast(error.message, 'error');
@@ -514,7 +484,6 @@ qrBtn.addEventListener('click', async () => {
   }
 });
 
-// Download QR Code button handler
 downloadQrBtn.addEventListener('click', () => {
   const link = document.createElement('a');
   link.download = `qr-${qrBtn.dataset.shortCode}.png`;
@@ -523,7 +492,7 @@ downloadQrBtn.addEventListener('click', () => {
   showToast('QR Code downloaded!', 'success');
 });
 
-// Add CSS animation for loading spinner
+// CSS animation
 const style = document.createElement('style');
 style.textContent = `
   @keyframes spin {
@@ -532,6 +501,174 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+// ==========================================
+// METRICS DASHBOARD
+// ==========================================
+
+function initializeMetricsDashboard() {
+  console.log('🚀 Initializing metrics dashboard...');
+  
+  const elements = {
+    totalUrls: document.getElementById('totalUrlsMetric'),
+    redirects: document.getElementById('successfulRedirectsMetric'),
+    failures: document.getElementById('failedLookupsMetric'),
+    latency: document.getElementById('avgLatencyMetric'),
+    ctr: document.getElementById('clickThroughRateMetric'),
+    connections: document.getElementById('activeConnectionsMetric'),
+    status: document.getElementById('metricsStatus'),
+    lastUpdate: document.getElementById('lastUpdateTime'),
+    topDomains: document.getElementById('topDomainsChart'),
+    refreshBtn: document.getElementById('refreshMetricsBtn')
+  };
+  
+  if (!elements.totalUrls) {
+    console.log('ℹ️ Metrics dashboard not found - skipping');
+    return;
+  }
+  
+  console.log('✅ Metrics dashboard elements found!');
+  
+  async function updateMetrics() {
+    try {
+      console.log('📊 Fetching metrics...');
+      const response = await fetch('http://localhost:3000/metrics');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const text = await response.text();
+      const lines = text.split('\n');
+      
+      function getMetricValue(metricName) {
+        const line = lines.find(l => l.startsWith(metricName + ' '));
+        if (!line) return 0;
+        const match = line.match(/\s+([\d.]+)$/);
+        return match ? parseFloat(match[1]) : 0;
+      }
+      
+      if (elements.totalUrls) {
+        elements.totalUrls.textContent = getMetricValue('total_urls_in_database').toLocaleString();
+      }
+      
+      if (elements.redirects) {
+        elements.redirects.textContent = getMetricValue('successful_redirects_total').toLocaleString();
+      }
+      
+      if (elements.failures) {
+        elements.failures.textContent = getMetricValue('failed_lookups_total').toLocaleString();
+      }
+      
+      if (elements.latency) {
+        const duration = getMetricValue('http_request_duration_seconds_sum');
+        const count = getMetricValue('http_request_duration_seconds_count');
+        const avgMs = count > 0 ? ((duration / count) * 1000).toFixed(2) : '0.00';
+        elements.latency.textContent = avgMs;
+      }
+      
+      if (elements.ctr) {
+        const ctr = getMetricValue('click_through_rate');
+        elements.ctr.textContent = (ctr * 100).toFixed(2) + '%';
+      }
+      
+      if (elements.connections) {
+        elements.connections.textContent = getMetricValue('active_connections').toLocaleString();
+      }
+      
+      if (elements.topDomains) {
+        const domainLines = lines.filter(l => l.startsWith('urls_shortened_by_domain_total{'));
+        
+        if (domainLines.length > 0) {
+          const domains = domainLines.map(line => {
+            const domainMatch = line.match(/domain="([^"]+)"/);
+            const valueMatch = line.match(/\s+([\d.]+)$/);
+            return {
+              domain: domainMatch ? domainMatch[1] : 'unknown',
+              count: valueMatch ? parseFloat(valueMatch[1]) : 0
+            };
+          }).sort((a, b) => b.count - a.count).slice(0, 5);
+          
+          const maxCount = Math.max(...domains.map(d => d.count));
+          
+          elements.topDomains.innerHTML = domains.map(d => `
+            <div class="domain-item">
+              <div>
+                <div class="domain-name">${d.domain}</div>
+                <div class="domain-bar">
+                  <div class="domain-bar-fill" style="width: ${(d.count / maxCount * 100)}%"></div>
+                </div>
+              </div>
+              <div class="domain-count"><span>${d.count.toLocaleString()}</span></div>
+            </div>
+          `).join('');
+        } else {
+          elements.topDomains.innerHTML = '<p style="opacity: 0.7; text-align: center;">No domain data yet. Shorten some URLs!</p>';
+        }
+      }
+      
+      if (elements.status) {
+        elements.status.innerHTML = '<span class="status-indicator"></span> Connected';
+      }
+      
+      if (elements.lastUpdate) {
+        elements.lastUpdate.textContent = new Date().toLocaleTimeString();
+      }
+      
+      console.log('✅ Metrics updated successfully');
+      
+    } catch (error) {
+      console.error('❌ Metrics error:', error);
+      
+      if (elements.status) {
+        elements.status.innerHTML = '<span class="status-indicator error"></span> Error: ' + error.message;
+      }
+    }
+  }
+  
+  if (elements.refreshBtn) {
+    elements.refreshBtn.addEventListener('click', () => {
+      updateMetrics();
+      elements.refreshBtn.disabled = true;
+      elements.refreshBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+          <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" opacity="0.75"></path>
+        </svg>
+        Refreshing...
+      `;
+      
+      setTimeout(() => {
+        elements.refreshBtn.disabled = false;
+        elements.refreshBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          Refresh
+        `;
+      }, 1000);
+    });
+  }
+  
+  updateMetrics();
+  const intervalId = setInterval(updateMetrics, 10000);
+  console.log('✅ Auto-refresh enabled (10s interval)');
+  
+  window.addEventListener('beforeunload', () => {
+    clearInterval(intervalId);
+  });
+  
+  return intervalId;
+}
+
+// Start metrics when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeMetricsDashboard);
+} else {
+  initializeMetricsDashboard();
+}
 
 // Initial load
 fetchUrls();

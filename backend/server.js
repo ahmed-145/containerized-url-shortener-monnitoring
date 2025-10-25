@@ -6,21 +6,202 @@ const path = require('path');
 const QRCode = require('qrcode');
 const multer = require('multer');
 const Papa = require('papaparse');
+const client = require('prom-client');
 
 // Configure multer for file uploads (in-memory storage)
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = process.env.DB_PATH || './data/urls.db';
 
-// Middleware
+// ==========================================
+// PROMETHEUS METRICS SETUP
+// ==========================================
+
+// Create a Registry to register metrics
+const register = new client.Registry();
+
+// Add default metrics (CPU, memory, etc.)
+client.collectDefaultMetrics({ register });
+
+// Custom Metrics
+
+// 1. Counter: Total URLs shortened
+const urlsShortenedCounter = new client.Counter({
+  name: 'urls_shortened_total',
+  help: 'Total number of URLs shortened',
+  registers: [register]
+});
+
+// 2. Counter: Successful redirects
+const successfulRedirectsCounter = new client.Counter({
+  name: 'successful_redirects_total',
+  help: 'Total number of successful URL redirects',
+  registers: [register]
+});
+
+// 3. Counter: Failed lookups (404s)
+const failedLookupsCounter = new client.Counter({
+  name: 'failed_lookups_total',
+  help: 'Total number of failed URL lookups (404 errors)',
+  registers: [register]
+});
+
+// 4. Histogram: Request latency
+const requestLatencyHistogram = new client.Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'HTTP request latency in seconds',
+  labelNames: ['method', 'route', 'status_code'],
+  buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+  registers: [register]
+});
+
+// Additional useful metrics
+const activeConnectionsGauge = new client.Gauge({
+  name: 'active_connections',
+  help: 'Number of active connections',
+  registers: [register]
+});
+
+// BONUS: Custom Business Metrics
+// Counter for domains being shortened
+const urlsByDomainCounter = new client.Counter({
+  name: 'urls_shortened_by_domain_total',
+  help: 'Total URLs shortened grouped by domain',
+  labelNames: ['domain'],
+  registers: [register]
+});
+
+// Gauge for total URLs in database
+const totalUrlsGauge = new client.Gauge({
+  name: 'total_urls_in_database',
+  help: 'Total number of URLs stored in database',
+  registers: [register]
+});
+
+// Counter for requests by hour
+const requestsByHourCounter = new client.Counter({
+  name: 'requests_by_hour_total',
+  help: 'Total requests grouped by hour of day',
+  labelNames: ['hour'],
+  registers: [register]
+});
+
+// Gauge for click-through rate
+const clickThroughRateGauge = new client.Gauge({
+  name: 'click_through_rate',
+  help: 'Ratio of redirects to total URLs created',
+  registers: [register]
+});
+
+// Helper function to extract domain from URL
+function extractDomain(url) {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname;
+  } catch (error) {
+    return 'invalid';
+  }
+}
+
+// Helper function to get current hour
+function getCurrentHour() {
+  return new Date().getHours().toString();
+}
+
+// Update total URLs gauge periodically
+function updateGaugeMetrics() {
+  db.get('SELECT COUNT(*) as count FROM urls', (err, row) => {
+    if (!err && row) {
+      totalUrlsGauge.set(row.count);
+    }
+  });
+  
+  // Update click-through rate
+  db.get('SELECT COUNT(*) as total_urls, SUM(clicks) as total_clicks FROM urls', (err, row) => {
+    if (!err && row && row.total_urls > 0) {
+      const rate = (row.total_clicks || 0) / row.total_urls;
+      clickThroughRateGauge.set(rate);
+    }
+  });
+}
+
+
+// BONUS: Custom Database Metrics Exporter
+const dbSizeGauge = new client.Gauge({
+  name: 'database_size_bytes',
+  help: 'Size of the SQLite database file in bytes',
+  registers: [register]
+});
+
+const dbConnectionsGauge = new client.Gauge({
+  name: 'database_connections',
+  help: 'Number of active database connections',
+  registers: [register]
+});
+
+const oldestUrlGauge = new client.Gauge({
+  name: 'oldest_url_age_seconds',
+  help: 'Age of the oldest URL in the database (in seconds)',
+  registers: [register]
+});
+
+const mostClickedUrlGauge = new client.Gauge({
+  name: 'most_clicked_url_clicks',
+  help: 'Number of clicks on the most popular URL',
+  registers: [register]
+});
+
+
+
+// ==========================================
+// MIDDLEWARE
+// ==========================================
+
 app.use(cors());
 app.use(express.json());
 
-// Database setup
+// Middleware to track request latency
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  // Increment active connections
+  activeConnectionsGauge.inc();
+  
+  // Track requests by hour (BONUS)
+  requestsByHourCounter.labels(getCurrentHour()).inc();
+  
+  // Store original end function
+  const originalEnd = res.end;
+  
+  // Override end function to capture metrics
+  res.end = function(...args) {
+    // Calculate duration in seconds
+    const duration = (Date.now() - start) / 1000;
+    
+    // Record latency
+    requestLatencyHistogram
+      .labels(req.method, req.route?.path || req.path, res.statusCode)
+      .observe(duration);
+    
+    // Decrement active connections
+    activeConnectionsGauge.dec();
+    
+    // Call original end function
+    originalEnd.apply(res, args);
+  };
+  
+  next();
+});
+
+// ==========================================
+// DATABASE SETUP
+// ==========================================
+
 const dbDir = path.dirname(DB_PATH);
 const fs = require('fs');
 if (!fs.existsSync(dbDir)) {
@@ -36,6 +217,7 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
 });
 
 // Create table
+// Create table and initialize metrics AFTER db is ready
 db.run(`
   CREATE TABLE IF NOT EXISTS urls (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,9 +226,51 @@ db.run(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     clicks INTEGER DEFAULT 0
   )
-`);
+`, (err) => {
+  if (err) {
+    console.error('Table creation error:', err);
+  } else {
+    console.log('✅ Database table ready');
+    
+    // NOW initialize gauge metrics (AFTER DB is ready)
+    updateGaugeMetrics();
+    
+    // Set up periodic gauge updates
+    setInterval(updateGaugeMetrics, 30000);
+    
+    // Update database metrics
+    setInterval(() => {
+      // Get database file size
+      if (fs.existsSync(DB_PATH)) {
+        const stats = fs.statSync(DB_PATH);
+        dbSizeGauge.set(stats.size);
+      }
+      
+      // Get oldest URL age
+      db.get('SELECT created_at FROM urls ORDER BY created_at ASC LIMIT 1', (err, row) => {
+        if (!err && row) {
+          const ageSeconds = (Date.now() - new Date(row.created_at).getTime()) / 1000;
+          oldestUrlGauge.set(ageSeconds);
+        }
+      });
+      
+      // Get most clicked URL
+      db.get('SELECT MAX(clicks) as max_clicks FROM urls', (err, row) => {
+        if (!err && row && row.max_clicks) {
+          mostClickedUrlGauge.set(row.max_clicks);
+        }
+      });
+      
+      // Database connections
+      dbConnectionsGauge.set(1);
+    }, 30000);
+  }
+});
 
-// Generate unique short code
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+
 function generateShortCode(length = 6) {
   return crypto.randomBytes(length)
     .toString('base64')
@@ -54,7 +278,6 @@ function generateShortCode(length = 6) {
     .substring(0, length);
 }
 
-// Validate URL
 function isValidUrl(string) {
   try {
     const url = new URL(string);
@@ -64,9 +287,7 @@ function isValidUrl(string) {
   }
 }
 
-// Enhanced URL validation with DNS lookup
 async function validateUrlEnhanced(urlString) {
-  // First check basic format
   if (!isValidUrl(urlString)) {
     return { valid: false, error: 'Invalid URL format' };
   }
@@ -75,7 +296,6 @@ async function validateUrlEnhanced(urlString) {
     const url = new URL(urlString);
     const hostname = url.hostname;
 
-    // Block common test/fake domains
     const blockedDomains = [
       'test.com', 'example.test', 'fake.com', 'dummy.com',
       'test.test', 'localhost', '127.0.0.1'
@@ -85,22 +305,83 @@ async function validateUrlEnhanced(urlString) {
       return { valid: false, error: 'Test/fake domain not allowed' };
     }
 
-    // Check if domain has valid DNS (optional - can be slow)
-    // Uncomment if you want DNS validation:
-    ////////////////////////////////////////////////////////////////////
     const dns = require('dns').promises;
     try {
       await dns.lookup(hostname);
     } catch (err) {
       return { valid: false, error: 'Domain does not exist' };
     }
-  //////////////////////////////////////////////////////////////////
 
     return { valid: true };
   } catch (error) {
     return { valid: false, error: 'Invalid URL' };
   }
 }
+
+// ==========================================
+// PROMETHEUS METRICS ENDPOINT
+// ==========================================
+
+app.get('/metrics', async (req, res) => {
+  try {
+    // Add CORS headers for browser access
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (error) {
+    res.status(500).end(error);
+  }
+});
+
+// BONUS: Metrics JSON Export
+app.get('/api/metrics/json', async (req, res) => {
+  try {
+    const metricsText = await register.metrics();
+    const lines = metricsText.split('\n');
+    const metricsJson = {
+      timestamp: new Date().toISOString(),
+      metrics: {}
+    };
+    
+    for (const line of lines) {
+      if (line.startsWith('#') || line.trim() === '') continue;
+      
+      const match = line.match(/^([a-zA-Z_:][a-zA-Z0-9_:]*?)(?:\{(.+?)\})?\s+(.+)$/);
+      if (match) {
+        const [, name, labels, value] = match;
+        
+        if (!metricsJson.metrics[name]) {
+          metricsJson.metrics[name] = [];
+        }
+        
+        const labelObj = {};
+        if (labels) {
+          const labelPairs = labels.match(/(\w+)="([^"]*)"/g);
+          if (labelPairs) {
+            labelPairs.forEach(pair => {
+              const [key, val] = pair.split('=');
+              labelObj[key] = val.replace(/"/g, '');
+            });
+          }
+        }
+        
+        metricsJson.metrics[name].push({
+          labels: labelObj,
+          value: parseFloat(value)
+        });
+      }
+    }
+    
+    res.json(metricsJson);
+  } catch (error) {
+    console.error('Metrics JSON error:', error);
+    res.status(500).json({ error: 'Failed to export metrics as JSON' });
+  }
+});
+
+// ==========================================
+// API ENDPOINTS
+// ==========================================
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -159,7 +440,6 @@ app.post('/api/check-existing', (req, res) => {
 app.post('/api/shorten', async (req, res) => {
   const { url, customCode } = req.body;
 
-  // Validate URL
   if (!url) {
     return res.status(400).json({ error: 'URL is required' });
   }
@@ -168,20 +448,17 @@ app.post('/api/shorten', async (req, res) => {
     return res.status(400).json({ error: 'Invalid URL format' });
   }
 
-  // Generate or use custom short code
   let shortCode = customCode;
   if (!shortCode) {
     shortCode = generateShortCode();
   } else {
-    // Validate custom code
-   if (!/^[a-zA-Z0-9-_]{2,20}$/.test(shortCode)) {
+    if (!/^[a-zA-Z0-9-_]{2,20}$/.test(shortCode)) {
       return res.status(400).json({ 
         error: 'Custom code must be 3-20 characters (letters, numbers, hyphens, underscores only)' 
       });
     }
   }
 
-  // Check if short code already exists
   db.get('SELECT * FROM urls WHERE short_code = ?', [shortCode], (err, row) => {
     if (err) {
       console.error('Database error:', err);
@@ -192,11 +469,9 @@ app.post('/api/shorten', async (req, res) => {
       if (customCode) {
         return res.status(409).json({ error: 'Custom code already exists' });
       }
-      // Retry with new code if random collision
       shortCode = generateShortCode(8);
     }
 
-    // Insert new URL
     db.run(
       'INSERT INTO urls (short_code, original_url) VALUES (?, ?)',
       [shortCode, url],
@@ -205,6 +480,13 @@ app.post('/api/shorten', async (req, res) => {
           console.error('Insert error:', err);
           return res.status(500).json({ error: 'Failed to create short URL' });
         }
+
+        // Increment URLs shortened counter
+        urlsShortenedCounter.inc();
+        
+        // BONUS: Track domain being shortened
+        const domain = extractDomain(url);
+        urlsByDomainCounter.labels(domain).inc();
 
         const shortUrl = `${req.protocol}://${req.get('host').replace(':3000', '')}/${shortCode}`;
         res.status(201).json({
@@ -294,7 +576,6 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
   }
 
   try {
-    // Parse CSV
     const csvData = req.file.buffer.toString('utf8');
     const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true });
     
@@ -304,7 +585,6 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
 
     const results = [];
     
-    // Process each row
     for (const row of parsed.data) {
       const url = row.url || row.URL || row.Url;
       const customCode = row.code || row.custom_code || '';
@@ -319,7 +599,6 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
         continue;
       }
 
-      // Validate URL
       if (!isValidUrl(url)) {
         results.push({
           original_url: url,
@@ -330,12 +609,10 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
         continue;
       }
 
-      // Generate short code
       let shortCode = customCode;
       if (!shortCode) {
         shortCode = generateShortCode();
       } else {
-        // Validate custom code
         if (!/^[a-zA-Z0-9-_]{2,20}$/.test(shortCode)) {
           results.push({
             original_url: url,
@@ -347,7 +624,6 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
         }
       }
 
-      // Check if code exists
       const existing = await new Promise((resolve, reject) => {
         db.get('SELECT * FROM urls WHERE short_code = ?', [shortCode], (err, row) => {
           if (err) reject(err);
@@ -365,18 +641,25 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
           });
           continue;
         }
-        // Generate new code if collision
         shortCode = generateShortCode(8);
       }
 
-      // Insert URL
       await new Promise((resolve, reject) => {
         db.run(
           'INSERT INTO urls (short_code, original_url) VALUES (?, ?)',
           [shortCode, url],
-          function(err) {
+                      function(err) {
             if (err) reject(err);
-            else resolve(this.lastID);
+            else {
+              // Increment URLs shortened counter for each successful bulk operation
+              urlsShortenedCounter.inc();
+              
+              // BONUS: Track domain for bulk operations
+              const domain = extractDomain(url);
+              urlsByDomainCounter.labels(domain).inc();
+              
+              resolve(this.lastID);
+            }
           }
         );
       });
@@ -390,7 +673,6 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
       });
     }
 
-    // Convert results to CSV
     const csv = Papa.unparse(results);
     
     res.setHeader('Content-Type', 'text/csv');
@@ -407,7 +689,6 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
 app.get('/api/qr/:shortCode', async (req, res) => {
   const { shortCode } = req.params;
 
-  // First check if the short code exists
   db.get('SELECT * FROM urls WHERE short_code = ?', [shortCode], async (err, row) => {
     if (err) {
       return res.status(500).json({ error: 'Database error' });
@@ -417,10 +698,8 @@ app.get('/api/qr/:shortCode', async (req, res) => {
     }
 
     try {
-      // Generate short URL
       const shortUrl = `${req.protocol}://${req.get('host').replace(':3000', '')}/${shortCode}`;
       
-      // Generate QR code as data URL
       const qrCodeDataUrl = await QRCode.toDataURL(shortUrl, {
         width: 300,
         margin: 2,
@@ -443,7 +722,10 @@ app.get('/api/qr/:shortCode', async (req, res) => {
   });
 });
 
-// Redirect handler
+// ==========================================
+// REDIRECT HANDLER (with metrics)
+// ==========================================
+
 app.get('/:shortCode', (req, res) => {
   const { shortCode } = req.params;
 
@@ -457,8 +739,13 @@ app.get('/:shortCode', (req, res) => {
       }
 
       if (!row) {
+        // Increment failed lookups counter
+        failedLookupsCounter.inc();
         return res.status(404).send('URL not found');
       }
+
+      // Increment successful redirects counter
+      successfulRedirectsCounter.inc();
 
       // Increment click counter
       db.run(
@@ -472,13 +759,19 @@ app.get('/:shortCode', (req, res) => {
   );
 });
 
-// Error handling middleware
+// ==========================================
+// ERROR HANDLING
+// ==========================================
+
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Graceful shutdown
+// ==========================================
+// GRACEFUL SHUTDOWN
+// ==========================================
+
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, closing database...');
   db.close(() => {
@@ -487,8 +780,12 @@ process.on('SIGTERM', () => {
   });
 });
 
-// Start server
+// ==========================================
+// START SERVER
+// ==========================================
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 URL Shortener API running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`📈 Metrics endpoint: http://localhost:${PORT}/metrics`);
 });
