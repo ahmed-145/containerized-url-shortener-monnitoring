@@ -163,6 +163,17 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
   - [ ] Test real-time metric updates
   - [ ] Export dashboard configuration
 
+##### **🎁 Week 3 Bonus Features** (Optional Enhancements)
+
+| Bonus Feature | Effort | Impact | Status |
+|---|---|---|---|
+| **Multiple Dashboards** (Operations, Business, Executive) | 2 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Dashboard Annotations** (deployments, incidents) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Dashboard Variables** (filters, time ranges) | 1.5 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Embed Grafana in Frontend** (iframe integration) | 1 hour | ⭐⭐⭐ High | ⬜ Not Started |
+| **Dark/Light Theme Toggle** | 30 min | ⭐ Low | ⬜ Not Started |
+| **PDF Report Generation** | 2 hours | ⭐⭐⭐ High | ⬜ Not Started |
+
 ---
 
 #### **Week 4: Alerts, Persistence & Documentation** ⏳ PENDING
@@ -180,6 +191,19 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
   - [ ] Create user manual
   - [ ] Prepare presentation materials
   - [ ] Final integration testing
+
+##### **🎁 Week 4 Bonus Features** (Optional Enhancements)
+
+| Bonus Feature | Effort | Impact | Status |
+|---|---|---|---|
+| **Multi-Channel Alerting** (Slack, Email, Discord) | 1.5 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Alert Testing Framework** (trigger intentional failures) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Disaster Recovery Plan** (backup & restore procedures) | 1.5 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **CI/CD Pipeline** (GitHub Actions) | 2 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Infrastructure as Code** (Terraform/Ansible) | 3 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Load Testing Report** (K6 or Apache Bench) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Security Audit Report** (docker scan, npm audit) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Postman Collection** (API documentation) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
 
 ---
 
