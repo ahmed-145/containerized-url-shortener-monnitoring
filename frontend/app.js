@@ -542,11 +542,25 @@ function initializeMetricsDashboard() {
       const lines = text.split('\n');
       
       function getMetricValue(metricName) {
-        const line = lines.find(l => l.startsWith(metricName + ' '));
-        if (!line) return 0;
+      // Match lines starting with metric name (with or without labels)
+      const metricLines = lines.filter(l => 
+        l.startsWith(metricName + ' ') || 
+        l.startsWith(metricName + '{')
+      );
+      
+      if (metricLines.length === 0) return 0;
+      
+      // Sum all values (handles both labeled and unlabeled metrics)
+      let sum = 0;
+      metricLines.forEach(line => {
         const match = line.match(/\s+([\d.]+)$/);
-        return match ? parseFloat(match[1]) : 0;
-      }
+        if (match) {
+          sum += parseFloat(match[1]);
+        }
+      });
+      
+      return sum;
+    }
       
       if (elements.totalUrls) {
         elements.totalUrls.textContent = getMetricValue('total_urls_in_database').toLocaleString();
@@ -561,11 +575,17 @@ function initializeMetricsDashboard() {
       }
       
       if (elements.latency) {
-        const duration = getMetricValue('http_request_duration_seconds_sum');
-        const count = getMetricValue('http_request_duration_seconds_count');
-        const avgMs = count > 0 ? ((duration / count) * 1000).toFixed(2) : '0.00';
+      // Sum ALL duration and count metrics (across all routes)
+      const duration = getMetricValue('http_request_duration_seconds_sum');
+      const count = getMetricValue('http_request_duration_seconds_count');
+      
+      if (count > 0) {
+        const avgMs = ((duration / count) * 1000).toFixed(2);
         elements.latency.textContent = avgMs;
+      } else {
+        elements.latency.textContent = '0.00';
       }
+    }
       
       if (elements.ctr) {
         const ctr = getMetricValue('click_through_rate');

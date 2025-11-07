@@ -11,15 +11,15 @@ global:
     environment: 'production'
 
 # Alertmanager configuration (optional for Week 2)
-# alerting:
-#   alertmanagers:
-#     - static_configs:
-#         - targets:
-#           # - alertmanager:9093
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+           - alertmanager:9093
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
-# rule_files:
-#   - "alerts.yml"
+rule_files:
+  - "alerts.yml"
 
 # A scrape configuration containing exactly one endpoint to scrape:
 scrape_configs:
