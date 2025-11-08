@@ -165,72 +165,93 @@ In modern DevOps practices, it's crucial to have comprehensive monitoring and ob
 
 ##### **🎁 Week 3 Bonus Features** ✅ ALL COMPLETE
 
-**Bonus Dashboards Created:**
-- ✅ **Advanced Analytics Dashboard** (7 additional panels)
-  - Top 10 domains, database growth, click-through rate, most clicked URL, oldest URL age, success vs failure comparison, hourly traffic patterns
-- ✅ **System Health Dashboard** (7 additional panels)
-  - Active connections, database size, P99 latency, service status, latency percentiles, connection trends, request throughput
-- ✅ **Automated Dashboard Creation Script** (bash script for API-based provisioning)
-- ✅ **Cross-Dashboard Navigation** (navigation links between dashboards)
-- ✅ **Infrastructure as Code** (auto-provisioned data sources and dashboards)
+**Delivered: 6/6 bonuses (100%)**
+
+| Bonus Feature | Impact | Status | Evidence |
+|---|---|---|---|
+| **1. Multiple Dashboards** (3 total: Main, Analytics, Health) | ⭐⭐⭐ High | ✅ Complete | 19 panels across 3 specialized dashboards |
+| **2. Dashboard Variables** (Interval filter: 30s, 1m, 5m, 10m, 30m) | ⭐⭐⭐ High | ✅ Complete | Dynamic time interval dropdown in main dashboard |
+| **3. Dashboard Annotations** (High Activity, Error Spike markers) | ⭐⭐ Medium | ✅ Complete | Auto-detection of traffic spikes and error increases |
+| **4. Embedded Grafana** (iframe integration in frontend) | ⭐⭐⭐ High | ✅ Complete | 3-tab switcher for all dashboards in main UI |
+| **5. Dark Theme** (professional default theme) | ⭐ Low | ✅ Complete | All dashboards use dark mode by default |
+| **6. PDF/Image Export** (Renderer service for reports) | ⭐⭐⭐ High | ✅ Complete | 120KB dashboard exports via API |
+
+**Additional Features Delivered:**
+- ✅ Automated dashboard creation script (`create-bonus-dashboards.sh`)
+- ✅ Cross-dashboard navigation links
+- ✅ Infrastructure as Code provisioning
+- ✅ Auto-refresh (5-10s intervals)
+- ✅ Color-coded thresholds on all gauges
 
 **Achievement Summary:**
 - **Required:** 1 dashboard with 5 panels
-- **Delivered:** 3 dashboards with 19 panels total
-- **Result:** 380% of requirements delivered
+- **Delivered:** 3 dashboards with 19 panels
+- **Result:** 380% of requirements + 6 advanced features
 
-**Dashboard Details:**
+**Dashboard Breakdown:**
+```
+Main Monitoring Dashboard (5 panels) - Core requirement
+├── Total Shortened Links (Stat with trend)
+├── URL Creation Rate (Time Series with $interval variable)
+├── Redirect Rate (Time Series with smooth interpolation)
+├── P95 Request Latency (Gauge: Green <50ms, Yellow 50-100ms, Red >100ms)
+└── 404 Error Rate (Time Series with 5% alert threshold)
 
-| Dashboard | Panels | Purpose | Refresh Rate |
-|-----------|--------|---------|--------------|
-| Main Monitoring (Required) | 5 | Core service metrics | 5s |
-| Advanced Analytics (Bonus) | 7 | Business intelligence | 10s |
-| System Health (Bonus) | 7 | Infrastructure monitoring | 10s |
-| **TOTAL** | **19** | Complete observability | - |
+Advanced Analytics Dashboard (7 panels) - Bonus
+├── Top 10 Domains Shortened (Bar Chart)
+├── Database Size Growth (Time Series in MB)
+├── Click-Through Rate (Gauge: Red <20%, Yellow 20-50%, Green >50%)
+├── Most Popular URL - Clicks (Stat)
+├── Oldest URL Age (Stat in seconds)
+├── Request Rate: Success vs Failure (Stacked Area Chart)
+└── Requests by Hour of Day (Bar Chart)
 
-**Access Information:**
-- **Grafana URL:** http://localhost:3001
-- **Default Credentials:** admin / admin
-- **Dashboard Location:** Dashboards → Browse
-- **Auto-Refresh:** 5-10 seconds
-- **Default Time Range:** Last 15-30 minutes
-
-**Key Features Implemented:**
-- ✅ Auto-provisioned Prometheus data source
-- ✅ File-based dashboard provisioning
-- ✅ Real-time metrics (5-10s refresh)
-- ✅ Editable and exportable dashboards
-- ✅ Color-coded thresholds on all gauges
-- ✅ Persistent Grafana data (Docker volume)
-- ✅ Health checks configured
-- ✅ Professional dark theme
-- ✅ Cross-dashboard navigation
+System Health Dashboard (7 panels) - Bonus
+├── Active Connections (Stat with thresholds)
+├── Database Size (Stat in MB)
+├── P99 Latency (Stat with thresholds)
+├── Service Status (UP/DOWN with color mapping)
+├── Request Latency Percentiles (P50/P95/P99 Time Series)
+├── Active Connections Over Time (Time Series)
+└── Request Throughput (Requests/sec Time Series)
+```
 
 **Testing Results:**
-- ✅ All 19 panels display data correctly
-- ✅ Dashboard updates in real-time
-- ✅ Prometheus data source connected
-- ✅ Time range and refresh controls work
-- ✅ Dashboards persist across restarts
-- ✅ All queries optimized (<20ms response time)
+- ✅ All 6 bonuses tested and verified working
+- ✅ Dashboard variables functional (interval dropdown)
+- ✅ Annotations trigger on traffic spikes
+- ✅ Grafana embedded in frontend (http://localhost scroll down)
+- ✅ PDF/PNG export working (120KB test file generated)
+- ✅ Dark theme applied to all dashboards
 
----
-
-#### **Week 4: Alerts, Persistence & Documentation** 🔄 IN PROGRESS
-**Status:** 📝 In Progress (11/08/2025 - 11/14/2025)
+#### **Week 4: Alerts, Persistence & Documentation** ⏳ PENDING
+**Status:** 📝 Pending (11/03/2025 - 11/09/2025)
 
 - **Key Tasks:**
   - [ ] Create Grafana alert: High latency threshold
   - [ ] Create Grafana alert: Elevated 404 rate
   - [x] Add Docker volume: SQLite database ✅
   - [x] Add Docker volume: Prometheus data ✅
-  - [x] Add Docker volume: Grafana data ✅
+  - [x] Add Docker volume: Grafana data
   - [x] Test persistence after container restart ✅
   - [ ] Write comprehensive README.md
   - [ ] Document API endpoints
   - [ ] Create user manual
   - [ ] Prepare presentation materials
   - [ ] Final integration testing
+
+##### **🎁 Week 4 Bonus Features** (Optional Enhancements)
+
+| Bonus Feature | Effort | Impact | Status |
+|---|---|---|---|
+| **Multi-Channel Alerting** (Slack, Email, Discord) | 1.5 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Alert Testing Framework** (trigger intentional failures) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Disaster Recovery Plan** (backup & restore procedures) | 1.5 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **CI/CD Pipeline** (GitHub Actions) | 2 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Infrastructure as Code** (Terraform/Ansible) | 3 hours | ⭐⭐⭐ High | ⬜ Not Started |
+| **Load Testing Report** (K6 or Apache Bench) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Security Audit Report** (docker scan, npm audit) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
+| **Postman Collection** (API documentation) | 1 hour | ⭐⭐ Medium | ⬜ Not Started |
 
 ---
 

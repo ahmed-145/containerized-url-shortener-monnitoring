@@ -143,25 +143,7 @@
             </div>
         </div>
 
-        <!-- Statistics Dashboard -->
-        <div class="stats-section">
-            <h2>Recent URLs</h2>
-            <div id="urlsList" class="urls-list">
-                <div class="loading">Loading...</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast"></div>
-
-    <script src="app.js"></script>
-</body>
-</html>
-
-
-
-<!-- Real-time Metrics Dashboard (BONUS) -->
+        <!-- Real-time Metrics Dashboard (BONUS) -->
         <div class="card metrics-card">
             <h2>📊 Real-time Metrics</h2>
             <p class="metrics-description">Live statistics from your URL shortener service</p>
@@ -227,3 +209,91 @@
                 </div>
             </div>
         </div>
+
+        <!-- Grafana Embedded Dashboards (BONUS - Week 3) -->
+        <div class="card grafana-embed-card">
+            <h2>📈 Advanced Analytics (Grafana)</h2>
+            <p class="grafana-description">Professional monitoring dashboards powered by Grafana</p>
+            
+            <div class="grafana-tabs">
+                <button class="grafana-tab active" data-dashboard="main">Main Monitoring</button>
+                <button class="grafana-tab" data-dashboard="analytics">Advanced Analytics</button>
+                <button class="grafana-tab" data-dashboard="health">System Health</button>
+                <a href="http://localhost:3001" target="_blank" class="grafana-tab external-link">
+                    Open Full Grafana
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                </a>
+            </div>
+            
+            <div class="grafana-iframe-container">
+                <iframe 
+                    id="grafanaFrame"
+                    src="http://localhost:3001/d/url-shortener-main/url-shortener-monitoring-dashboard?orgId=1&refresh=5s&kiosk=tv&theme=dark"
+                    frameborder="0"
+                    allowfullscreen
+                ></iframe>
+                <div class="grafana-loading">
+                    <div class="spinner"></div>
+                    <p>Loading Grafana Dashboard...</p>
+                </div>
+            </div>
+            
+            <div class="grafana-info">
+                <p>💡 <strong>Tip:</strong> These dashboards update automatically every 5-10 seconds with real-time metrics from Prometheus.</p>
+            </div>
+        </div>
+
+        <!-- Statistics Dashboard -->
+        <div class="stats-section">
+            <h2>Recent URLs</h2>
+            <div id="urlsList" class="urls-list">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+    <script>
+        // Grafana Tab Switching
+        document.querySelectorAll('.grafana-tab:not(.external-link)').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.grafana-tab').forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Get dashboard type
+                const dashboard = this.getAttribute('data-dashboard');
+                const iframe = document.getElementById('grafanaFrame');
+                
+                // Dashboard URLs
+                const dashboards = {
+                    main: 'http://localhost:3001/d/url-shortener-main/url-shortener-monitoring-dashboard?orgId=1&refresh=5s&kiosk=tv&theme=dark',
+                    analytics: 'http://localhost:3001/d/url-shortener-analytics/url-shortener-advanced-analytics?orgId=1&refresh=10s&kiosk=tv&theme=dark',
+                    health: 'http://localhost:3001/d/url-shortener-system-health/url-shortener-system-health?orgId=1&refresh=10s&kiosk=tv&theme=dark'
+                };
+                
+                // Change iframe src
+                iframe.src = dashboards[dashboard];
+                
+                // Show loading indicator
+                document.querySelector('.grafana-loading').style.display = 'flex';
+            });
+        });
+        
+        // Hide loading indicator when iframe loads
+        document.getElementById('grafanaFrame').addEventListener('load', function() {
+            setTimeout(() => {
+                document.querySelector('.grafana-loading').style.display = 'none';
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

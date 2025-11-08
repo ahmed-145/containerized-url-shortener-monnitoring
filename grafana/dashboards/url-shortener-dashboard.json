@@ -12,6 +12,36 @@
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "enable": true,
+        "expr": "changes(urls_shortened_total[5m]) > 10",
+        "hide": false,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "name": "High Activity",
+        "step": "60s",
+        "tagKeys": "deployment,incident",
+        "textFormat": "Traffic Spike Detected",
+        "titleFormat": "High Activity"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "enable": true,
+        "expr": "rate(failed_lookups_total[5m]) > 0.1",
+        "hide": false,
+        "iconColor": "rgba(255, 152, 48, 1)",
+        "name": "Error Spike",
+        "step": "60s",
+        "tagKeys": "incident",
+        "textFormat": "High Error Rate",
+        "titleFormat": "Error Spike"
       }
     ]
   },
@@ -19,13 +49,38 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Analytics Dashboard",
+      "tooltip": "View advanced analytics",
+      "type": "link",
+      "url": "/d/url-shortener-analytics/url-shortener-advanced-analytics"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "System Health",
+      "tooltip": "View system health metrics",
+      "type": "link",
+      "url": "/d/url-shortener-system-health/url-shortener-system-health"
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
       "datasource": {
         "type": "prometheus",
-        "type": "prometheus"
+        "uid": "PBFA97CFB590B2093"
       },
       "fieldConfig": {
         "defaults": {
@@ -72,7 +127,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "type": "prometheus"
+            "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
           "expr": "total_urls_in_database",
@@ -87,7 +142,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "type": "prometheus"
+        "uid": "PBFA97CFB590B2093"
       },
       "fieldConfig": {
         "defaults": {
@@ -165,10 +220,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "type": "prometheus"
+            "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "rate(urls_shortened_total[1m]) * 60",
+          "expr": "rate(urls_shortened_total[$interval]) * 60",
           "legendFormat": "URLs Created per Minute",
           "range": true,
           "refId": "A"
@@ -180,7 +235,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "type": "prometheus"
+        "uid": "PBFA97CFB590B2093"
       },
       "fieldConfig": {
         "defaults": {
@@ -259,10 +314,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "type": "prometheus"
+            "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "rate(successful_redirects_total[1m]) * 60",
+          "expr": "rate(successful_redirects_total[$interval]) * 60",
           "legendFormat": "Successful Redirects per Minute",
           "range": true,
           "refId": "A"
@@ -274,7 +329,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "type": "prometheus"
+        "uid": "PBFA97CFB590B2093"
       },
       "fieldConfig": {
         "defaults": {
@@ -327,10 +382,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "type": "prometheus"
+            "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[$interval])) by (le)) * 1000",
           "legendFormat": "P95 Latency",
           "range": true,
           "refId": "A"
@@ -342,7 +397,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "type": "prometheus"
+        "uid": "PBFA97CFB590B2093"
       },
       "fieldConfig": {
         "defaults": {
@@ -425,10 +480,10 @@
         {
           "datasource": {
             "type": "prometheus",
-            "type": "prometheus"
+            "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "rate(failed_lookups_total[5m]) / (rate(successful_redirects_total[5m]) + rate(failed_lookups_total[5m]))",
+          "expr": "rate(failed_lookups_total[$interval]) / (rate(successful_redirects_total[$interval]) + rate(failed_lookups_total[$interval]))",
           "legendFormat": "404 Error Rate",
           "range": true,
           "refId": "A"
@@ -446,7 +501,51 @@
     "monitoring"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "1m",
+          "value": "1m"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Interval",
+        "multi": false,
+        "name": "interval",
+        "options": [
+          {
+            "selected": false,
+            "text": "30s",
+            "value": "30s"
+          },
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          }
+        ],
+        "query": "30s,1m,5m,10m,30m",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
   },
   "time": {
     "from": "now-15m",
@@ -456,6 +555,6 @@
   "timezone": "",
   "title": "URL Shortener Monitoring Dashboard",
   "uid": "url-shortener-main",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
