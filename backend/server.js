@@ -781,6 +781,67 @@ process.on('SIGTERM', () => {
 });
 
 // ==========================================
+// ALERT TESTING FRAMEWORK
+// ==========================================
+
+// Test endpoint: Simulate high latency
+app.post('/test/simulate-latency', (req, res) => {
+  const { duration = 200 } = req.body;
+  
+  console.log(`⚠️ TEST: Simulating ${duration}ms latency`);
+  
+  setTimeout(() => {
+    res.json({
+      success: true,
+      message: `Simulated ${duration}ms latency`,
+      timestamp: new Date().toISOString()
+    });
+  }, duration);
+});
+
+// Test endpoint: Generate 404 errors
+app.post('/test/generate-404s', (req, res) => {
+  const { count = 100 } = req.body;
+  
+  console.log(`⚠️ TEST: Generating ${count} 404 errors`);
+  
+  let generated = 0;
+  const interval = setInterval(() => {
+    if (generated >= count) {
+      clearInterval(interval);
+      return;
+    }
+    failedLookupsCounter.inc();
+    generated++;
+  }, 10);
+  
+  res.json({
+    success: true,
+    message: `Generating ${count} 404 errors`,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test endpoint: Dashboard
+app.get('/test/dashboard', (req, res) => {
+  res.json({
+    title: 'Alert Testing Framework',
+    endpoints: [
+      {
+        method: 'POST',
+        path: '/test/simulate-latency',
+        body: { duration: 'milliseconds' }
+      },
+      {
+        method: 'POST',
+        path: '/test/generate-404s',
+        body: { count: 'number of errors' }
+      }
+    ]
+  });
+});
+
+// ==========================================
 // START SERVER
 // ==========================================
 
@@ -789,3 +850,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`📈 Metrics endpoint: http://localhost:${PORT}/metrics`);
 });
+
+

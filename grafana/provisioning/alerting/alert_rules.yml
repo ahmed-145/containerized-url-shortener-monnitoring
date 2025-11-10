@@ -1,0 +1,53 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: URL Shortener Alerts
+    folder: Alerts
+    interval: 1m
+    rules:
+      # Alert 1: High Latency Alert
+      - uid: high_latency_alert
+        title: High Request Latency
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.1
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          description: 'P95 latency is {{ $value }}s (threshold: 0.1s)'
+          summary: Request latency is above 100ms for more than 2 minutes
+        labels:
+          severity: warning
+          service: url-shortener
+      
+      # Alert 2: Elevated 404 Rate Alert
+      - uid: high_404_rate_alert
+        title: Elevated 404 Error Rate
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              expr: rate(failed_lookups_total[5m]) / (rate(successful_redirects_total[5m]) + rate(failed_lookups_total[5m])) > 0.05
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 2m
+        annotations:
+          description: '404 error rate is {{ $value | humanizePercentage }} (threshold: 5%)'
+          summary: Failed URL lookups exceed 5% of total requests for more than 2 minutes
+        labels:
+          severity: warning
+          service: url-shortener

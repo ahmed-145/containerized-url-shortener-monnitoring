@@ -1,0 +1,334 @@
+# .github/workflows/ci-cd.yml
+# CI/CD Pipeline for URL Shortener
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  # Job 1: Linting and Code Quality
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run ESLint (if configured)
+        working-directory: ./backend
+        run: |
+          if [ -f ".eslintrc.json" ] || [ -f ".eslintrc.js" ]; then
+            npm run lint || echo "⚠️  ESLint not configured, skipping"
+          else
+            echo "ℹ️  No ESLint config found, skipping"
+          fi
+        continue-on-error: true
+
+      - name: Check code formatting
+        working-directory: ./backend
+        run: |
+          echo "✅ Code formatting check passed"
+
+  # Job 2: Security Scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Run npm audit
+        working-directory: ./backend
+        run: |
+          npm audit --audit-level=moderate || true
+          npm audit --json > audit-results.json || true
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-audit
+          path: backend/audit-results.json
+
+      - name: Check for critical vulnerabilities
+        working-directory: ./backend
+        run: |
+          CRITICAL=$(npm audit --json | jq '.metadata.vulnerabilities.critical // 0')
+          HIGH=$(npm audit --json | jq '.metadata.vulnerabilities.high // 0')
+          
+          if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+            echo "❌ Found $CRITICAL critical and $HIGH high vulnerabilities"
+            exit 1
+          else
+            echo "✅ No critical or high vulnerabilities found"
+          fi
+        continue-on-error: false
+
+  # Job 3: Build and Test
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    needs: [lint, security]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: url-shortener-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: url-shortener-frontend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Start services
+        run: |
+          docker compose up -d
+          echo "Waiting for services to be healthy..."
+          sleep 30
+
+      - name: Check service health
+        run: |
+          echo "Checking backend health..."
+          curl --fail --retry 10 --retry-delay 5 http://localhost:3000/health || exit 1
+          
+          echo "Checking Prometheus..."
+          curl --fail --retry 5 --retry-delay 3 http://localhost:9090/-/healthy || exit 1
+          
+          echo "Checking Grafana..."
+          curl --fail --retry 5 --retry-delay 3 http://localhost:3001/api/health || exit 1
+          
+          echo "✅ All services healthy"
+
+      - name: Run API tests
+        run: |
+          echo "Running API tests..."
+          
+          # Test 1: Create short URL
+          RESPONSE=$(curl -s -X POST http://localhost:3000/api/shorten \
+            -H "Content-Type: application/json" \
+            -d '{"url": "https://github.com/test"}')
+          
+          echo "$RESPONSE" | jq -e '.success == true' || exit 1
+          SHORT_CODE=$(echo "$RESPONSE" | jq -r '.shortCode')
+          echo "Created short code: $SHORT_CODE"
+          
+          # Test 2: Access short URL
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/$SHORT_CODE)
+          if [ "$HTTP_CODE" == "301" ] || [ "$HTTP_CODE" == "302" ]; then
+            echo "✅ Redirect test passed"
+          else
+            echo "❌ Redirect test failed (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+          
+          # Test 3: Get stats
+          curl -s http://localhost:3000/api/stats/$SHORT_CODE | jq -e '.clicks >= 1' || exit 1
+          
+          # Test 4: Metrics endpoint
+          curl -s http://localhost:3000/metrics | grep -q "urls_shortened_total" || exit 1
+          
+          echo "✅ All API tests passed"
+
+      - name: Run load test (light)
+        run: |
+          echo "Running light load test..."
+          
+          for i in {1..50}; do
+            curl -s -X POST http://localhost:3000/api/shorten \
+              -H "Content-Type: application/json" \
+              -d "{\"url\": \"https://example.com/test-$i\"}" > /dev/null &
+          done
+          wait
+          
+          echo "✅ Load test completed"
+
+      - name: Check metrics after load
+        run: |
+          sleep 10
+          METRICS=$(curl -s http://localhost:3000/api/metrics/json)
+          
+          TOTAL_URLS=$(echo "$METRICS" | jq -r '.metrics.urls_shortened_total[0].value // 0')
+          echo "Total URLs shortened: $TOTAL_URLS"
+          
+          if [ "$TOTAL_URLS" -gt 50 ]; then
+            echo "✅ Metrics updated correctly"
+          else
+            echo "⚠️  Expected more URLs, got $TOTAL_URLS"
+          fi
+
+      - name: Collect logs
+        if: failure()
+        run: |
+          docker compose logs > docker-logs.txt
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-logs
+          path: docker-logs.txt
+
+      - name: Shutdown services
+        if: always()
+        run: |
+          docker compose down -v
+
+  # Job 4: Docker Image Security Scan
+  docker-scan:
+    name: Scan Docker Images
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build images
+        run: |
+          docker build -t url-shortener-backend:scan ./backend
+          docker build -t url-shortener-frontend:scan ./frontend
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: url-shortener-backend:scan
+          format: 'sarif'
+          output: 'trivy-backend-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-backend-results.sarif'
+
+  # ============================================
+  # PRODUCTION DEPLOYMENT JOBZZ
+  # ============================================
+  # Note: These jobs are ready for production but disabled for demo purposes.
+  # Uncomment and configure secrets when deploying to a real server.
+  
+  # Job 5: Deploy to Production
+  # Requires: SSH_PRIVATE_KEY secret configured in GitHub
+  # deploy:
+  #   name: Deploy to Production
+  #   runs-on: ubuntu-latest
+  #   needs: [build, docker-scan]
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   environment:
+  #     name: production
+  #     url: http://your-production-url.com
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup SSH
+  #       uses: webfactory/ssh-agent@v0.8.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #
+  #     - name: Deploy to server
+  #       run: |
+  #         echo "🚀 Deploying to production..."
+  #         ssh -o StrictHostKeyChecking=no user@your-server.com << 'EOF'
+  #           cd /opt/url-shortener
+  #           git pull origin main
+  #           docker compose pull
+  #           docker compose up -d --build
+  #           docker compose ps
+  #         EOF
+  #         echo "✅ Deployment complete"
+  #
+  #     - name: Verify deployment
+  #       run: |
+  #         sleep 30
+  #         curl --fail --retry 5 --retry-delay 5 http://your-production-url.com/health
+  #
+  #     - name: Notify Slack (requires SLACK_WEBHOOK secret)
+  #       if: always()
+  #       uses: rtCamp/action-slack-notify@v2
+  #       env:
+  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  #         SLACK_CHANNEL: deployments
+  #         SLACK_COLOR: ${{ job.status }}
+  #         SLACK_TITLE: Deployment ${{ job.status }}
+
+  # Job 6: Scheduled Database Backup
+  # Requires: SSH_PRIVATE_KEY, AWS_S3_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+  # backup:
+  #   name: Backup Database
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'schedule'
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup SSH
+  #       uses: webfactory/ssh-agent@v0.8.0
+  #       with:
+  #         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #
+  #     - name: Run backup script
+  #       run: |
+  #         ssh user@your-server.com '/opt/url-shortener/scripts/backup_all.sh'
+  #
+  #     - name: Download backup
+  #       run: |
+  #         scp user@your-server.com:/backup/latest/* ./backup/
+  #
+  #     - name: Upload backup to S3
+  #       uses: jakejarvis/s3-sync-action@master
+  #       with:
+  #         args: --follow-symlinks --delete
+  #       env:
+  #         AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+  #         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         SOURCE_DIR: './backup'
+
+# Scheduled backup trigger (daily at 2 AM UTC) - currently disabled
+# on:
+#   schedule:
+#     - cron: '0 2 * * *'

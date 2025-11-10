@@ -837,4 +837,15 @@ In the final week, we'll complete:
 
 ---
 
+## Observability Architecture
+
+This project implements a **multi-tier observability stack**:
+
+- **Prometheus**: Metrics collection and storage (30-day retention)
+- **Grafana**: Advanced visualization and alerting for DevOps teams
+- **Frontend Dashboard**: Real-time operational health checks for all stakeholders
+- **JSON API**: Programmatic metrics access for integrations
+
+This architecture mirrors production systems at companies like Netflix and GitHub, where different audiences consume monitoring data through different interfaces optimized for their needs.
+
 **Built with ❤️ by the DEPI DevOps Team**

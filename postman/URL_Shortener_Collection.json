@@ -1,0 +1,473 @@
+{
+  "info": {
+    "name": "URL Shortener API - Complete Collection",
+    "description": "Complete Postman collection for URL Shortener API with monitoring endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "short_code",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check if the service is healthy and running"
+          },
+          "response": []
+        },
+        {
+          "name": "Detailed Health Check (Test)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/test/health-detailed",
+              "host": ["{{base_url}}"],
+              "path": ["test", "health-detailed"]
+            },
+            "description": "Get detailed health information with metrics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "URL Shortening",
+      "item": [
+        {
+          "name": "Shorten URL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has shortCode\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('shortCode');",
+                  "    pm.collectionVariables.set('short_code', jsonData.shortCode);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has shortUrl\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('shortUrl');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://www.github.com/ahmed-145/url-shortener\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shorten",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shorten"]
+            },
+            "description": "Create a shortened URL"
+          },
+          "response": []
+        },
+        {
+          "name": "Shorten URL with Custom Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://www.github.com/\",\n  \"customCode\": \"github\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/shorten",
+              "host": ["{{base_url}}"],
+              "path": ["api", "shorten"]
+            },
+            "description": "Create a shortened URL with a custom short code"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://www.example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/validate-url",
+              "host": ["{{base_url}}"],
+              "path": ["api", "validate-url"]
+            },
+            "description": "Validate a URL before shortening"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Existing URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://www.github.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/check-existing",
+              "host": ["{{base_url}}"],
+              "path": ["api", "check-existing"]
+            },
+            "description": "Check if a URL has already been shortened"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "URL Management",
+      "item": [
+        {
+          "name": "Get All URLs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/urls?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "urls"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get paginated list of all shortened URLs"
+          },
+          "response": []
+        },
+        {
+          "name": "Get URL Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stats/{{short_code}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stats", "{{short_code}}"]
+            },
+            "description": "Get statistics for a specific shortened URL"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete URL",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/urls/{{short_code}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "urls", "{{short_code}}"]
+            },
+            "description": "Delete a shortened URL"
+          },
+          "response": []
+        },
+        {
+          "name": "Redirect (Access Short URL)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/{{short_code}}",
+              "host": ["{{base_url}}"],
+              "path": ["{{short_code}}"]
+            },
+            "description": "Access a shortened URL (will redirect)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "QR Code & Bulk Operations",
+      "item": [
+        {
+          "name": "Generate QR Code",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/qr/{{short_code}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "qr", "{{short_code}}"]
+            },
+            "description": "Generate QR code for a shortened URL"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Shorten URLs (CSV)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "urls.csv",
+                  "description": "CSV file with 'url' column"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/bulk-shorten",
+              "host": ["{{base_url}}"],
+              "path": ["api", "bulk-shorten"]
+            },
+            "description": "Upload CSV file to shorten multiple URLs at once"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Monitoring & Metrics",
+      "item": [
+        {
+          "name": "Prometheus Metrics (Text)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/metrics",
+              "host": ["{{base_url}}"],
+              "path": ["metrics"]
+            },
+            "description": "Get Prometheus metrics in text format"
+          },
+          "response": []
+        },
+        {
+          "name": "Metrics JSON Export",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/metrics/json",
+              "host": ["{{base_url}}"],
+              "path": ["api", "metrics", "json"]
+            },
+            "description": "Get metrics in JSON format"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Alert Testing Framework",
+      "item": [
+        {
+          "name": "Test Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/test/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["test", "dashboard"]
+            },
+            "description": "View all available test endpoints"
+          },
+          "response": []
+        },
+        {
+          "name": "Simulate High Latency",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"duration\": 500\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/test/simulate-latency",
+              "host": ["{{base_url}}"],
+              "path": ["test", "simulate-latency"]
+            },
+            "description": "Simulate slow response (triggers latency alert)"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate 404 Errors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"count\": 200\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/test/generate-404s",
+              "host": ["{{base_url}}"],
+              "path": ["test", "generate-404s"]
+            },
+            "description": "Generate multiple 404 errors (triggers 404 rate alert)"
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Load",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"duration\": 60,\n  \"requestsPerSecond\": 20\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/test/generate-load",
+              "host": ["{{base_url}}"],
+              "path": ["test", "generate-load"]
+            },
+            "description": "Generate sustained load for testing"
+          },
+          "response": []
+        },
+        {
+          "name": "Simulate Failure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"failureType\": \"error\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/test/simulate-failure",
+              "host": ["{{base_url}}"],
+              "path": ["test", "simulate-failure"]
+            },
+            "description": "Simulate various failure modes (timeout, error, memory)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert Thresholds",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/test/alert-thresholds",
+              "host": ["{{base_url}}"],
+              "path": ["test", "alert-thresholds"]
+            },
+            "description": "View configured alert thresholds and test commands"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('Request to: ' + pm.request.url);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test(\"Response time is acceptable\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+          "});"
+        ]
+      }
+    }
+  ]
+}
