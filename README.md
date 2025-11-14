@@ -249,7 +249,7 @@ System Health Dashboard (7 panels) - Bonus
 | **Disaster Recovery Plan** (backup & restore procedures) | 1.5 hours | ⭐⭐⭐ High | ✅ Complete |
 | **CI/CD Pipeline** (GitHub Actions) | 2 hours | ⭐⭐⭐ High | ✅ Complete |
 | **Infrastructure as Code** (Terraform/Ansible) | 3 hours | ⭐⭐⭐ High | ✅ Complete |
-| **Load Testing Report** (K6 or Apache Bench) | 1 hour | ⭐⭐ Medium | ✅ Complete |
+| **Load Testing Report** (K6 or Bench) | 1 hour | ⭐⭐ Medium | ✅ Complete |
 | **Security Audit Report** (docker scan, npm audit) | 1 hour | ⭐⭐ Medium | ✅ Complete |
 | **Postman Collection** (API documentation) | 1 hour | ⭐⭐ Medium | ✅ Complete |
 
@@ -351,7 +351,7 @@ System Health Dashboard (7 panels) - Bonus
 | **Client Library** | prom-client | 15.1.0 | Node.js Prometheus client |
 | **Visualization** | Grafana | Latest | Dashboards & alerting |
 | **Alerting** | Grafana Alerting | Latest | Alert rules & notifications | ← NEW
-| **Testing** | Apache Bench | Latest | Load testing | ← NEW
+| **Testing** | Postman | Latest | Load testing | ← NEW
 | **Backup** | Shell Scripts | Bash 5.x | Automated backup/restore | ← NEW
 | **CI/CD** | GitHub Actions | Latest | Automated pipeline | ← NEW
 | **Containerization** | Docker | Latest | Application packaging |
