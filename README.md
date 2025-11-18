@@ -827,6 +827,19 @@ Long URLs pose several challenges in the modern digital landscape:
 
 ---
 
+### Risk Assessment & Mitigation Plan
+
+| Risk ID | Risk Description | Probability | Impact | Mitigation Strategy | Contingency Plan |
+|---------|------------------|-------------|--------|---------------------|------------------|
+| **R1** | Database corruption | Medium | High | - Daily automated backups<br>- ACID transactions<br>- Data integrity checks | Restore from most recent backup (RTO: 15 min) |
+| **R2** | Service downtime | Low | High | - Docker health checks<br>- Auto-restart policies<br>- Real-time monitoring | Immediate alert triggers manual intervention |
+| **R3** | Docker host failure | Low | High | - Cloud deployment option<br>- Infrastructure redundancy | Migrate to backup host within 30 min |
+| **R4** | Security breach | Low | Critical | - Input validation on all endpoints<br>- Regular security audits<br>- No secrets in code | Incident response plan, immediate patching |
+| **R5** | Prometheus data loss | Medium | Medium | - 30-day retention policy<br>- Regular Prometheus backups | Historical data reconstructed from logs |
+| **R6** | Performance degradation | Medium | Medium | - Regular load testing<br>- Query optimization<br>- Resource monitoring | Horizontal scaling (add containers) |
+| **R7** | Dependency vulnerabilities | Medium | Medium | - npm audit on every build<br>- Docker image scanning<br>- Automated updates | Immediate dependency patches via CI/CD |
+| **R8** | Team member unavailable | Low | Low | - Comprehensive documentation<br>- Knowledge sharing sessions<br>- Cross-training | Any team member can maintain system |
+
 ### 10. Risk Matrix Visualization
 
 ![Risk Matrix](docs/diagrams/Risk-Matrix-Visualization.png)
