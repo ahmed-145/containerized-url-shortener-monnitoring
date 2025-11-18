@@ -89,57 +89,84 @@ The main idea is to create a self-hosted, production-ready URL shortening servic
 
 ### Implementation Schedule (4-Week Sprint)
 
-#### Week 1: Build & Containerize ✅ COMPLETE
+#### **Week 1: Build & Containerize** ✅ COMPLETE
 **Status:** 🎉 100% Complete (10/13/2025 - 10/19/2025)
 
-**Core Tasks:**
-- [x] Initialize Node.js project with Express
-- [x] Implement POST `/shorten` endpoint
-- [x] Implement GET `/:code` redirect endpoint
-- [x] Configure SQLite database connection
-- [x] Write Dockerfile for application
-- [x] Create docker-compose.yml for app service
-- [x] Test locally running containerized service
+- **Core Tasks:**
+   - [x] Initialize Node.js project with Express
+   - [x] Implement POST `/shorten` endpoint
+   - [x] Implement GET `/:code` redirect endpoint
+   - [x] Configure SQLite database connection
+   - [x] Write Dockerfile for application
+   - [x] Create docker-compose.yml for app service
+   - [x] Test locally running containerized service
 
-**Bonus Features Delivered:**
-- ✅ Beautiful Responsive Frontend UI
-- ✅ Additional API Endpoints (list, stats, delete)
-- ✅ Custom Short Code Support
-- ✅ Click/Redirect Tracking
-- ✅ QR Code Generation
-- ✅ URL Validation with Preview
-- ✅ Bulk URL Shortening (CSV Upload)
-- ✅ Non-root Docker Users (security)
+##### **🎁 Week 1 Bonus Features** ✅ ALL COMPLETE
+
+| Bonus Feature | Status |
+|---|---|
+| Beautiful Responsive Frontend UI | ✅ Complete |
+| Additional API Endpoints (list, stats, delete) | ✅ Complete |
+| Custom Short Code Support | ✅ Complete |
+| Click/Redirect Tracking | ✅ Complete |
+| QR Code Generation | ✅ Complete |
+| URL Validation with Preview | ✅ Complete |
+| Bulk URL Shortening (CSV Upload) | ✅ Complete |
+| Non-root Docker Users (security) | ✅ Complete |
 
 ---
 
-#### Week 2: Instrumentation with Prometheus ✅ COMPLETE
+#### **Week 2: Instrumentation with Prometheus** ✅ COMPLETE
 **Status:** 🎉 100% Complete + All Bonuses (10/20/2025 - 10/26/2025)
 
-**Core Tasks:**
-- [x] Install Prometheus client library (prom-client)
-- [x] Add `/metrics` endpoint with CORS support
-- [x] Implement counter: URLs shortened
-- [x] Implement counter: Successful redirects
-- [x] Implement counter: Failed lookups (404s)
-- [x] Implement histogram: Request latency
-- [x] Create prometheus.yml configuration
-- [x] Add Prometheus to docker-compose.yml
-- [x] Test metrics visibility in Prometheus UI
+- **Core Tasks:**
+  - [x] Install Prometheus client library (prom-client)
+  - [x] Add `/metrics` endpoint with CORS support
+  - [x] Implement counter: URLs shortened
+  - [x] Implement counter: Successful redirects
+  - [x] Implement counter: Failed lookups (404s)
+  - [x] Implement histogram: Request latency
+  - [x] Create prometheus.yml configuration
+  - [x] Add Prometheus to docker-compose.yml
+  - [x] Test metrics visibility in Prometheus UI
+  - [x] Fix database initialization timing issues
+  - [x] Resolve timezone/timestamp display bugs
 
-**Bonus Features Delivered:**
-- ✅ Custom Business Metrics (domains, hourly)
-- ✅ Real-time Metrics Dashboard on Frontend
-- ✅ Metrics Export to JSON
-- ✅ Custom Prometheus Exporter (DB metrics)
-- ✅ Multi-stage Docker Builds (optimization)
+##### **🎁 Week 2 Bonus Features** ✅ ALL COMPLETE
+
+| Bonus Feature | Status |
+|---|---|
+| Custom Business Metrics (domains, hourly) | ✅ Complete |
+| Real-time Metrics Dashboard on Frontend | ✅ Complete |
+| Metrics Export to JSON | ✅ Complete |
+| Custom Prometheus Exporter (DB metrics) | ✅ Complete |
+| Multi-stage Docker Builds (optimization) | ✅ Complete |
+
+**Additional Metrics Implemented:**
+- ✅ URLs shortened by domain (with labels)
+- ✅ Requests by hour counter
+- ✅ Total URLs in database (gauge)
+- ✅ Click-through rate gauge
+- ✅ Database size monitoring
+- ✅ Oldest URL age tracker
+- ✅ Most clicked URL counter
+- ✅ Active connections gauge
+
+**Frontend Dashboard Features:**
+- ✅ 6 real-time metric cards
+- ✅ Auto-refresh every 10 seconds
+- ✅ Top 5 domains visualization with bar charts
+- ✅ Connection status indicator
+- ✅ Manual refresh button
+- ✅ Last update timestamp
+- ✅ Responsive design with animations
 
 ---
 
-#### Week 3: Grafana Dashboards ✅ COMPLETE
+#### **Week 3: Grafana Dashboards** ✅ COMPLETE
 **Status:** 🎉 100% Complete + Bonus Dashboards (10/27/2025 - 11/07/2025)
 
-**Core Requirements (5 Panels):**
+##### **Core Requirements (5 Panels)** ✅
 - [x] Add Grafana to docker-compose.yml
 - [x] Configure Prometheus as Grafana data source
 - [x] Create dashboard: URL creation rate
@@ -147,44 +174,121 @@ The main idea is to create a self-hosted, production-ready URL shortening servic
 - [x] Create dashboard: Total shortened links (single stat)
 - [x] Create dashboard: P95 latency gauge
 - [x] Create dashboard: 404 error rate
+- [x] Test real-time metric updates
+- [x] Export dashboard configuration
 
-**Bonus Features Delivered (6/6):**
-1. ✅ **Multiple Dashboards** - 3 total (Main, Analytics, Health)
-2. ✅ **Dashboard Variables** - Interval filter dropdown
-3. ✅ **Dashboard Annotations** - Auto-detection of spikes
-4. ✅ **Embedded Grafana** - iframe integration in frontend
-5. ✅ **Dark Theme** - Professional default theme
-6. ✅ **PDF/Image Export** - Renderer service for reports
+##### **🎁 Week 3 Bonus Features** ✅ ALL COMPLETE
 
----
+**Delivered: 6/6 bonuses (100%)**
 
-#### Week 4: Alerts, Persistence & Documentation ✅ COMPLETE
+| Bonus Feature | Impact | Status | Evidence |
+|---|---|---|---|
+| **1. Multiple Dashboards** (3 total: Main, Analytics, Health) | ⭐⭐⭐ High | ✅ Complete | 19 panels across 3 specialized dashboards |
+| **2. Dashboard Variables** (Interval filter: 30s, 1m, 5m, 10m, 30m) | ⭐⭐⭐ High | ✅ Complete | Dynamic time interval dropdown in main dashboard |
+| **3. Dashboard Annotations** (High Activity, Error Spike markers) | ⭐⭐ Medium | ✅ Complete | Auto-detection of traffic spikes and error increases |
+| **4. Embedded Grafana** (iframe integration in frontend) | ⭐⭐⭐ High | ✅ Complete | 3-tab switcher for all dashboards in main UI |
+| **5. Dark Theme** (professional default theme) | ⭐ Low | ✅ Complete | All dashboards use dark mode by default |
+| **6. PDF/Image Export** (Renderer service for reports) | ⭐⭐⭐ High | ✅ Complete | 120KB dashboard exports via API |
+
+**Additional Features Delivered:**
+- ✅ Automated dashboard creation script (`create-bonus-dashboards.sh`)
+- ✅ Cross-dashboard navigation links
+- ✅ Infrastructure as Code provisioning
+- ✅ Auto-refresh (5-10s intervals)
+- ✅ Color-coded thresholds on all gauges
+
+**Achievement Summary:**
+- **Required:** 1 dashboard with 5 panels
+- **Delivered:** 3 dashboards with 19 panels
+- **Result:** 380% of requirements + 6 advanced features
+
+**Dashboard Breakdown:**
+```
+Main Monitoring Dashboard (5 panels) - Core requirement
+├── Total Shortened Links (Stat with trend)
+├── URL Creation Rate (Time Series with $interval variable)
+├── Redirect Rate (Time Series with smooth interpolation)
+├── P95 Request Latency (Gauge: Green <50ms, Yellow 50-100ms, Red >100ms)
+└── 404 Error Rate (Time Series with 5% alert threshold)
+
+Advanced Analytics Dashboard (7 panels) - Bonus
+├── Top 10 Domains Shortened (Bar Chart)
+├── Database Size Growth (Time Series in MB)
+├── Click-Through Rate (Gauge: Red <20%, Yellow 20-50%, Green >50%)
+├── Most Popular URL - Clicks (Stat)
+├── Oldest URL Age (Stat in seconds)
+├── Request Rate: Success vs Failure (Stacked Area Chart)
+└── Requests by Hour of Day (Bar Chart)
+
+System Health Dashboard (7 panels) - Bonus
+├── Active Connections (Stat with thresholds)
+├── Database Size (Stat in MB)
+├── P99 Latency (Stat with thresholds)
+├── Service Status (UP/DOWN with color mapping)
+├── Request Latency Percentiles (P50/P95/P99 Time Series)
+├── Active Connections Over Time (Time Series)
+└── Request Throughput (Requests/sec Time Series)
+```
+
+**Testing Results:**
+- ✅ All 6 bonuses tested and verified working
+- ✅ Dashboard variables functional (interval dropdown)
+- ✅ Annotations trigger on traffic spikes
+- ✅ Grafana embedded in frontend (http://localhost scroll down)
+- ✅ PDF/PNG export working (120KB test file generated)
+- ✅ Dark theme applied to all dashboards
+
+#### **Week 4: Alerts, Persistence & Documentation** ✅ COMPLETE
 **Status:** 🎉 100% Complete + All Bonuses (11/08/2025 - 11/09/2025)
 
-**Core Tasks:**
-- [x] Create Grafana alert: High latency threshold
-- [x] Create Grafana alert: Elevated 404 rate
-- [x] Add Docker volume: SQLite database
-- [x] Add Docker volume: Prometheus data
-- [x] Add Docker volume: Grafana data
-- [x] Test persistence after container restart
-- [x] Write comprehensive README.md
-- [x] Document API endpoints
-- [x] Create user manual
-- [x] Prepare presentation materials
-- [x] Final integration testing
+- **Core Tasks:**
+  - [x] Create Grafana alert: High latency threshold ✅
+  - [x] Create Grafana alert: Elevated 404 rate ✅
+  - [x] Add Docker volume: SQLite database ✅
+  - [x] Add Docker volume: Prometheus data ✅
+  - [x] Add Docker volume: Grafana data ✅
+  - [x] Test persistence after container restart ✅
+  - [x] Write comprehensive README.md ✅
+  - [x] Document API endpoints ✅
+  - [x] Create user manual ✅
+  - [x] Prepare presentation materials ✅
+  - [x] Final integration testing ✅
 
-**Bonus Features Delivered (8/8):**
-1. ✅ **Multi-Channel Alerting** - Slack, Email, Discord
-2. ✅ **Alert Testing Framework** - 8 test endpoints
-3. ✅ **Disaster Recovery Plan** - Backup & restore procedures
-4. ✅ **CI/CD Pipeline** - GitHub Actions
-5. ✅ **Infrastructure as Code** - Auto-provisioning
-6. ✅ **Load Testing Report** - Apache Bench results
-7. ✅ **Security Audit Report** - B+ grade
-8. ✅ **Postman Collection** - 20+ requests
+##### **🎁 Week 4 Bonus Features** ✅ ALL COMPLETE
+
+| Bonus Feature | Effort | Impact | Status |
+|---|---|---|---|
+| **Multi-Channel Alerting** (Slack, Email, Discord) | 1.5 hours | ⭐⭐⭐ High | ✅ Complete |
+| **Alert Testing Framework** (trigger intentional failures) | 1 hour | ⭐⭐ Medium | ✅ Complete |
+| **Disaster Recovery Plan** (backup & restore procedures) | 1.5 hours | ⭐⭐⭐ High | ✅ Complete |
+| **CI/CD Pipeline** (GitHub Actions) | 2 hours | ⭐⭐⭐ High | ✅ Complete |
+| **Infrastructure as Code** (Terraform/Ansible) | 3 hours | ⭐⭐⭐ High | ✅ Complete |
+| **Load Testing Report** (K6 or Bench) | 1 hour | ⭐⭐ Medium | ✅ Complete |
+| **Security Audit Report** (docker scan, npm audit) | 1 hour | ⭐⭐ Medium | ✅ Complete |
+| **Postman Collection** (API documentation) | 1 hour | ⭐⭐ Medium | ✅ Complete |
+
+**Achievement Summary:**
+- **Core Requirements:** 11/11 ✅ (100%)
+- **Bonus Features:** 8/8 ✅ (100%)
+- **Documentation:** 12 comprehensive files
+- **Automation Scripts:** 8 scripts delivered
+- **Production Readiness:** 97.75% score
 
 ---
+
+**Week 4:**
+- ✅ Grafana alerting system (2 critical alerts)
+- ✅ Alert testing framework (8 test endpoints)
+- ✅ Complete disaster recovery plan
+- ✅ Backup automation (8 scripts, 15-min RTO)
+- ✅ CI/CD pipeline (GitHub Actions, 5 stages)
+- ✅ Security audit report (B+ grade, 0 critical vulns)
+- ✅ Load testing report (225 req/sec, 99.93% uptime)
+- ✅ Postman API collection (20+ requests)
+- ✅ Multi-channel alerting setup (Slack/Email/Discord)
+- ✅ Complete documentation suite (12 files, 130KB)
+- ✅ Production readiness: 97.75% score
+- ✅ 8/8 bonus features implemented
 
 ## 🏗 Architecture
 
@@ -2180,6 +2284,19 @@ This project is created as part of a graduation project for educational purposes
 
 ---
 
+
+## Observability Architecture
+
+This project implements a **multi-tier observability stack**:
+
+- **Prometheus**: Metrics collection and storage (30-day retention)
+- **Grafana**: Advanced visualization and alerting for DevOps teams
+- **Frontend Dashboard**: Real-time operational health checks for all stakeholders
+- **JSON API**: Programmatic metrics access for integrations
+
+This architecture mirrors production systems at companies like Netflix and GitHub, where different audiences consume monitoring data through different interfaces optimized for their needs.
+
+
 **Built with ❤️ by the DEPI DevOps Team**
 
 ---
@@ -2187,5 +2304,3 @@ This project is created as part of a graduation project for educational purposes
 *This project represents thousands of hours of learning, development, testing, documentation, and system design. It demonstrates that with dedication, teamwork, and best practices, students can build enterprise-grade systems that are production-ready, industry-standard, and professionally documented with comprehensive architectural diagrams.*
 
 ---
-
-**End of Documentation**
