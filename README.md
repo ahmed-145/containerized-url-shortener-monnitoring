@@ -5,6 +5,7 @@
 - [Team Members & Roles](#team-members--roles)
 - [Project Objectives & Scope](#project-objectives--scope)
 - [Project Timeline](#project-timeline)
+- [Future Roadmap: Phase 5-9](#future-roadmap-phase-5-9)
 - [Architecture](#architecture)
 - [Features](#features)
 - [Technology Stack](#technology-stack)
