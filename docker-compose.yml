@@ -89,7 +89,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Grafana Visualization Service (Week 3 - WITH BONUSES)
+  # Grafana Visualization Service
   grafana:
     image: grafana/grafana:latest
     container_name: url-shortener-grafana
@@ -100,16 +100,12 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=http://localhost:3001
       - GF_INSTALL_PLUGINS=
-      # BONUS: Enable anonymous access for iframe embedding
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
-      # BONUS: PDF Report Generation (Rendering)
       - GF_RENDERING_SERVER_URL=http://renderer:8081/render
       - GF_RENDERING_CALLBACK_URL=http://grafana:3000/
-      # BONUS: Allow iframe embedding
       - GF_SECURITY_ALLOW_EMBEDDING=true
       - GF_SECURITY_COOKIE_SAMESITE=none
-      # Dark theme by default (BONUS: Theme)
       - GF_USERS_DEFAULT_THEME=dark
     ports:
       - "3001:3000"
@@ -134,7 +130,7 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # BONUS: Grafana Image Renderer (for PDF reports)
+  # Grafana Image Renderer (for PDF reports)
   renderer:
     image: grafana/grafana-image-renderer:latest
     container_name: url-shortener-renderer
@@ -147,11 +143,54 @@ services:
     networks:
       - url-shortener-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/render/version"]
+      interval: 10s      # ← Changed from 30s
+      timeout: 5s        # ← Changed from 10s
+      retries: 5         # ← Changed from 3
+      start_period: 40s  # ← Changed from 20s (gives more startup time)
+
+  # NEW: AI-Powered Report Generator
+  ai-reporter:
+    build:
+      context: ./ai-reporter
+      dockerfile: Dockerfile
+    container_name: url-shortener-ai-reporter
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - GRAFANA_URL=http://grafana:3000
+      - GRAFANA_USER=admin
+      - GRAFANA_PASSWORD=admin
+      - PROMETHEUS_URL=http://prometheus:9090
+      - REPORTS_DIR=/app/reports
+      # IMPORTANT: Add your Claude API key here or via .env file
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+      
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./reports:/app/reports
+    networks:
+      - url-shortener-network
+    depends_on:
+      grafana:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+#      renderer:
+#        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 # Volumes for data persistence
 volumes:
@@ -164,6 +203,9 @@ volumes:
   grafana-data:
     driver: local
     name: url-shortener-grafana
+  reports-data:
+    driver: local
+    name: url-shortener-reports
 
 # Networks
 networks:

@@ -9,7 +9,7 @@ const Papa = require('papaparse');
 const client = require('prom-client');
 
 // Configure multer for file uploads (in-memory storage)
-const upload = multer({ 
+const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
@@ -120,7 +120,7 @@ function updateGaugeMetrics() {
       totalUrlsGauge.set(row.count);
     }
   });
-  
+
   // Update click-through rate
   db.get('SELECT COUNT(*) as total_urls, SUM(clicks) as total_clicks FROM urls', (err, row) => {
     if (!err && row && row.total_urls > 0) {
@@ -168,33 +168,33 @@ app.use(express.json());
 // Middleware to track request latency
 app.use((req, res, next) => {
   const start = Date.now();
-  
+
   // Increment active connections
   activeConnectionsGauge.inc();
-  
+
   // Track requests by hour (BONUS)
   requestsByHourCounter.labels(getCurrentHour()).inc();
-  
+
   // Store original end function
   const originalEnd = res.end;
-  
+
   // Override end function to capture metrics
-  res.end = function(...args) {
+  res.end = function (...args) {
     // Calculate duration in seconds
     const duration = (Date.now() - start) / 1000;
-    
+
     // Record latency
     requestLatencyHistogram
       .labels(req.method, req.route?.path || req.path, res.statusCode)
       .observe(duration);
-    
+
     // Decrement active connections
     activeConnectionsGauge.dec();
-    
+
     // Call original end function
     originalEnd.apply(res, args);
   };
-  
+
   next();
 });
 
@@ -231,13 +231,13 @@ db.run(`
     console.error('Table creation error:', err);
   } else {
     console.log('✅ Database table ready');
-    
+
     // NOW initialize gauge metrics (AFTER DB is ready)
     updateGaugeMetrics();
-    
+
     // Set up periodic gauge updates
     setInterval(updateGaugeMetrics, 30000);
-    
+
     // Update database metrics
     setInterval(() => {
       // Get database file size
@@ -245,7 +245,7 @@ db.run(`
         const stats = fs.statSync(DB_PATH);
         dbSizeGauge.set(stats.size);
       }
-      
+
       // Get oldest URL age
       db.get('SELECT created_at FROM urls ORDER BY created_at ASC LIMIT 1', (err, row) => {
         if (!err && row) {
@@ -253,14 +253,14 @@ db.run(`
           oldestUrlGauge.set(ageSeconds);
         }
       });
-      
+
       // Get most clicked URL
       db.get('SELECT MAX(clicks) as max_clicks FROM urls', (err, row) => {
         if (!err && row && row.max_clicks) {
           mostClickedUrlGauge.set(row.max_clicks);
         }
       });
-      
+
       // Database connections
       dbConnectionsGauge.set(1);
     }, 30000);
@@ -342,18 +342,18 @@ app.get('/api/metrics/json', async (req, res) => {
       timestamp: new Date().toISOString(),
       metrics: {}
     };
-    
+
     for (const line of lines) {
       if (line.startsWith('#') || line.trim() === '') continue;
-      
+
       const match = line.match(/^([a-zA-Z_:][a-zA-Z0-9_:]*?)(?:\{(.+?)\})?\s+(.+)$/);
       if (match) {
         const [, name, labels, value] = match;
-        
+
         if (!metricsJson.metrics[name]) {
           metricsJson.metrics[name] = [];
         }
-        
+
         const labelObj = {};
         if (labels) {
           const labelPairs = labels.match(/(\w+)="([^"]*)"/g);
@@ -364,14 +364,14 @@ app.get('/api/metrics/json', async (req, res) => {
             });
           }
         }
-        
+
         metricsJson.metrics[name].push({
           labels: labelObj,
           value: parseFloat(value)
         });
       }
     }
-    
+
     res.json(metricsJson);
   } catch (error) {
     console.error('Metrics JSON error:', error);
@@ -385,10 +385,40 @@ app.get('/api/metrics/json', async (req, res) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     database: 'connected'
+  });
+});
+
+// Kubernetes Liveness Probe - checks if the application is alive
+app.get('/health/live', (req, res) => {
+  // Simple check - if we can respond, we're alive
+  res.status(200).json({
+    status: 'alive',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Kubernetes Readiness Probe - checks if the application is ready to serve traffic
+app.get('/health/ready', (req, res) => {
+  // Check database connectivity
+  db.get('SELECT 1', (err) => {
+    if (err) {
+      console.error('Readiness check failed - database error:', err);
+      return res.status(503).json({
+        status: 'not ready',
+        reason: 'database connection failed',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    res.status(200).json({
+      status: 'ready',
+      database: 'connected',
+      timestamp: new Date().toISOString()
+    });
   });
 });
 
@@ -407,11 +437,11 @@ app.post('/api/validate-url', async (req, res) => {
 // API: Check if URL already shortened
 app.post('/api/check-existing', (req, res) => {
   const { url } = req.body;
-  
+
   if (!url) {
     return res.status(400).json({ error: 'URL is required' });
   }
-  
+
   db.get(
     'SELECT * FROM urls WHERE original_url = ? ORDER BY created_at DESC LIMIT 1',
     [url],
@@ -419,7 +449,7 @@ app.post('/api/check-existing', (req, res) => {
       if (err) {
         return res.status(500).json({ error: 'Database error' });
       }
-      
+
       if (row) {
         const shortUrl = `http://localhost/${row.short_code}`;
         res.json({
@@ -453,8 +483,8 @@ app.post('/api/shorten', async (req, res) => {
     shortCode = generateShortCode();
   } else {
     if (!/^[a-zA-Z0-9-_]{2,20}$/.test(shortCode)) {
-      return res.status(400).json({ 
-        error: 'Custom code must be 3-20 characters (letters, numbers, hyphens, underscores only)' 
+      return res.status(400).json({
+        error: 'Custom code must be 3-20 characters (letters, numbers, hyphens, underscores only)'
       });
     }
   }
@@ -475,7 +505,7 @@ app.post('/api/shorten', async (req, res) => {
     db.run(
       'INSERT INTO urls (short_code, original_url) VALUES (?, ?)',
       [shortCode, url],
-      function(err) {
+      function (err) {
         if (err) {
           console.error('Insert error:', err);
           return res.status(500).json({ error: 'Failed to create short URL' });
@@ -483,7 +513,7 @@ app.post('/api/shorten', async (req, res) => {
 
         // Increment URLs shortened counter
         urlsShortenedCounter.inc();
-        
+
         // BONUS: Track domain being shortened
         const domain = extractDomain(url);
         urlsByDomainCounter.labels(domain).inc();
@@ -558,7 +588,7 @@ app.get('/api/stats/:shortCode', (req, res) => {
 app.delete('/api/urls/:shortCode', (req, res) => {
   const { shortCode } = req.params;
 
-  db.run('DELETE FROM urls WHERE short_code = ?', [shortCode], function(err) {
+  db.run('DELETE FROM urls WHERE short_code = ?', [shortCode], function (err) {
     if (err) {
       return res.status(500).json({ error: 'Database error' });
     }
@@ -578,17 +608,17 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
   try {
     const csvData = req.file.buffer.toString('utf8');
     const parsed = Papa.parse(csvData, { header: true, skipEmptyLines: true });
-    
+
     if (!parsed.data || parsed.data.length === 0) {
       return res.status(400).json({ error: 'CSV file is empty or invalid' });
     }
 
     const results = [];
-    
+
     for (const row of parsed.data) {
       const url = row.url || row.URL || row.Url;
       const customCode = row.code || row.custom_code || '';
-      
+
       if (!url) {
         results.push({
           original_url: 'N/A',
@@ -648,16 +678,16 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
         db.run(
           'INSERT INTO urls (short_code, original_url) VALUES (?, ?)',
           [shortCode, url],
-                      function(err) {
+          function (err) {
             if (err) reject(err);
             else {
               // Increment URLs shortened counter for each successful bulk operation
               urlsShortenedCounter.inc();
-              
+
               // BONUS: Track domain for bulk operations
               const domain = extractDomain(url);
               urlsByDomainCounter.labels(domain).inc();
-              
+
               resolve(this.lastID);
             }
           }
@@ -674,7 +704,7 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
     }
 
     const csv = Papa.unparse(results);
-    
+
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=shortened-urls.csv');
     res.send(csv);
@@ -699,7 +729,7 @@ app.get('/api/qr/:shortCode', async (req, res) => {
 
     try {
       const shortUrl = `${req.protocol}://${req.get('host').replace(':3000', '')}/${shortCode}`;
-      
+
       const qrCodeDataUrl = await QRCode.toDataURL(shortUrl, {
         width: 300,
         margin: 2,
@@ -787,9 +817,9 @@ process.on('SIGTERM', () => {
 // Test endpoint: Simulate high latency
 app.post('/test/simulate-latency', (req, res) => {
   const { duration = 200 } = req.body;
-  
+
   console.log(`⚠️ TEST: Simulating ${duration}ms latency`);
-  
+
   setTimeout(() => {
     res.json({
       success: true,
@@ -802,9 +832,9 @@ app.post('/test/simulate-latency', (req, res) => {
 // Test endpoint: Generate 404 errors
 app.post('/test/generate-404s', (req, res) => {
   const { count = 100 } = req.body;
-  
+
   console.log(`⚠️ TEST: Generating ${count} 404 errors`);
-  
+
   let generated = 0;
   const interval = setInterval(() => {
     if (generated >= count) {
@@ -814,7 +844,7 @@ app.post('/test/generate-404s', (req, res) => {
     failedLookupsCounter.inc();
     generated++;
   }, 10);
-  
+
   res.json({
     success: true,
     message: `Generating ${count} 404 errors`,

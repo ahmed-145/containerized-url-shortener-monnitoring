@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-reporter
+  namespace: url-shortener
+  labels:
+    app: ai-reporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-reporter
+  template:
+    metadata:
+      labels:
+        app: ai-reporter
+    spec:
+      containers:
+      - name: ai-reporter
+        image: url-shortener-ai-reporter:k8s
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 4000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: ai-reporter-config
+              key: PORT
+        - name: GRAFANA_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ai-reporter-config
+              key: GRAFANA_URL
+        - name: PROMETHEUS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ai-reporter-config
+              key: PROMETHEUS_URL
+        - name: REPORTS_DIR
+          valueFrom:
+            configMapKeyRef:
+              name: ai-reporter-config
+              key: REPORTS_DIR
+        - name: CEREBRAS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-reporter-secret
+              key: CEREBRAS_API_KEY
+        - name: GRAFANA_USER
+          value: "admin"
+        - name: GRAFANA_PASSWORD
+          value: "admin"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: reports
+          mountPath: /app/reports
+      volumes:
+      - name: reports
+        persistentVolumeClaim:
+          claimName: reports-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-reporter
+  namespace: url-shortener
+  labels:
+    app: ai-reporter
+spec:
+  type: NodePort
+  ports:
+  - port: 4000
+    targetPort: 4000
+    nodePort: 30040
+    protocol: TCP
+    name: http
+  selector:
+    app: ai-reporter
