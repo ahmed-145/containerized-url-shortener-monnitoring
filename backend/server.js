@@ -451,7 +451,7 @@ app.post('/api/check-existing', (req, res) => {
       }
 
       if (row) {
-        const shortUrl = `http://localhost/${row.short_code}`;
+        const shortUrl = `${req.protocol}://${req.get('host').replace(':3000', '')}/${row.short_code}`;
         res.json({
           exists: true,
           shortCode: row.short_code,

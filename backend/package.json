@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "lint": "eslint . --ext .js"
   },
   "keywords": [
     "url-shortener",
@@ -26,6 +27,7 @@
     "sqlite3": "^5.1.6"
   },
   "devDependencies": {
+    "eslint": "^8.56.0",
     "nodemon": "^3.0.1"
   }
 }

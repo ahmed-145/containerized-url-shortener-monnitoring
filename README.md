@@ -397,6 +397,34 @@ System Health Dashboard (7 panels) - Bonus
 
 **Phase 5 Complete:** All core requirements + all bonus features implemented! 🎉
 
+#### Advanced Kubernetes Features (Not Yet Implemented)
+
+- [ ] Helm Chart packaging
+  - [ ] Create Helm chart structure (`Chart.yaml`, `values.yaml`, `templates/`)
+  - [ ] Template all K8s manifests with configurable values
+  - [ ] Support multi-environment deployments (dev, staging, prod) via `values-*.yaml`
+  - [ ] Add Helm hooks for database migrations
+  - [ ] Package and publish chart to GitHub Pages or ChartMuseum
+  - [ ] Document Helm install/upgrade/rollback commands
+
+- [ ] Ingress Controller
+  - [ ] Install Nginx Ingress Controller on minikube
+  - [ ] Create Ingress resource with path-based routing:
+    - [ ] `/` → Frontend Service
+    - [ ] `/api/*` → Backend Service
+    - [ ] `/grafana` → Grafana Service
+    - [ ] `/prometheus` → Prometheus Service
+  - [ ] Replace NodePort services with ClusterIP (cleaner architecture)
+  - [ ] Add TLS termination with self-signed cert (or cert-manager)
+  - [ ] Test single-entry-point access to all services
+
+- [ ] Kubernetes Network Policies
+  - [ ] Create NetworkPolicy: Backend can only receive from Frontend + Prometheus
+  - [ ] Create NetworkPolicy: Database (SQLite volume) only accessible by Backend
+  - [ ] Create NetworkPolicy: Grafana can only query Prometheus
+  - [ ] Create NetworkPolicy: Deny all ingress by default, allow explicitly
+  - [ ] Test policies: verify blocked connections are actually blocked
+  - [ ] Document security posture in architecture diagrams
 
 
 ---
@@ -820,6 +848,131 @@ System Health Dashboard (7 panels) - Bonus
 
 ---
 
+### Phase 10 – Observability Stack Completion
+**Status:** 0% Planned  
+**Goal:** Complete the "three pillars of observability" (metrics + logs + traces) and implement SRE practices with SLOs/SLIs, making the project enterprise-grade.
+
+#### Core Tasks
+
+- [ ] Centralized Logging with Grafana Loki
+  - [ ] Add Loki service to docker-compose.yml
+  - [ ] Add Promtail service (log collector agent)
+  - [ ] Configure Promtail to collect logs from backend container
+  - [ ] Add Loki as data source in Grafana
+  - [ ] Create Grafana log dashboard:
+    - [ ] Log stream by service
+    - [ ] Error log filtering
+    - [ ] Correlation between metrics spikes and log entries
+  - [ ] Add structured JSON logging to backend (replace `console.log`)
+  - [ ] Create K8s manifests for Loki + Promtail
+  - [ ] Test log querying with LogQL in Grafana
+
+- [ ] Distributed Tracing with OpenTelemetry
+  - [ ] Install OpenTelemetry SDK in backend (`@opentelemetry/sdk-node`)
+  - [ ] Add Jaeger service to docker-compose.yml
+  - [ ] Instrument HTTP requests with trace context
+  - [ ] Instrument database queries with spans
+  - [ ] Add Jaeger as data source in Grafana
+  - [ ] Create trace dashboard in Grafana:
+    - [ ] Request flow visualization
+    - [ ] Slow query identification
+    - [ ] Error trace analysis
+  - [ ] Create K8s manifest for Jaeger
+  - [ ] Correlate traces with logs and metrics in Grafana
+
+- [ ] SLOs/SLIs (Service Level Objectives)
+  - [ ] Define SLIs (Service Level Indicators):
+    - [ ] Availability: % of successful requests (target: 99.9%)
+    - [ ] Latency: % of requests under 100ms (target: 95%)
+    - [ ] Error Rate: % of non-5xx responses (target: 99.5%)
+  - [ ] Create SLO dashboard in Grafana:
+    - [ ] Error budget remaining (30-day window)
+    - [ ] SLI trend over time
+    - [ ] Burn rate alerts (if error budget consumed too fast)
+  - [ ] Add alert rules for SLO violations
+  - [ ] Document SLOs in README and runbooks
+
+#### Bonus Features (Observability)
+- [ ] Grafana unified alerting across metrics + logs
+- [ ] Custom OpenTelemetry metrics (replace prom-client with OTel metrics)
+- [ ] Log-based alerting (alert on specific error patterns)
+- [ ] Trace sampling configuration for production efficiency
+
+#### Verification Checklist
+- [ ] Can query logs in Grafana via LogQL
+- [ ] Can view request traces end-to-end in Jaeger/Grafana
+- [ ] SLO dashboard shows error budget and burn rate
+- [ ] Metrics, logs, and traces are correlated (click from metric → trace → logs)
+- [ ] All observability services running in both Docker Compose and K8s
+
+---
+
+### Phase 11 – Security Hardening & Quality
+**Status:** 0% Planned  
+**Goal:** Implement production security practices (secrets management, proper testing, code quality) that demonstrate enterprise security awareness.
+
+#### Core Tasks
+
+- [ ] Secrets Management
+  - [ ] Remove all hardcoded secrets from docker-compose.yml (Grafana password, API keys)
+  - [ ] For Docker Compose: use Docker secrets or external `.env` files
+  - [ ] For Kubernetes: implement Sealed Secrets (Bitnami)
+    - [ ] Install kubeseal CLI and Sealed Secrets controller
+    - [ ] Create SealedSecret for Grafana admin password
+    - [ ] Create SealedSecret for Cerebras API key
+    - [ ] Create SealedSecret for database credentials (for PostgreSQL phase)
+  - [ ] Or: implement HashiCorp Vault
+    - [ ] Deploy Vault in dev mode on Kubernetes
+    - [ ] Store secrets in Vault
+    - [ ] Configure Vault Agent sidecar for secret injection
+  - [ ] Verify no secrets in git history (use `git-secrets` or `trufflehog`)
+  - [ ] Document secret rotation procedures
+
+- [ ] Automated Testing Framework
+  - [ ] Install Jest testing framework in backend
+  - [ ] Write unit tests:
+    - [ ] `generateShortCode()` — length, uniqueness, character set
+    - [ ] `isValidUrl()` — valid/invalid URLs, edge cases
+    - [ ] `validateUrlEnhanced()` — DNS checks, blocked domains
+    - [ ] `extractDomain()` — URL parsing
+  - [ ] Write integration tests:
+    - [ ] POST `/api/shorten` — success, validation errors, custom codes
+    - [ ] GET `/:code` — redirect, 404 handling
+    - [ ] GET `/api/urls` — pagination
+    - [ ] DELETE `/api/urls/:code` — deletion, not found
+    - [ ] POST `/api/bulk-shorten` — CSV processing
+  - [ ] Add test coverage reporting (`jest --coverage`)
+  - [ ] Add coverage badge to README
+  - [ ] Add `npm test` to CI/CD pipeline
+  - [ ] Set minimum coverage threshold (e.g., 80%)
+
+- [ ] Code Quality & Linting
+  - [x] Add ESLint configuration (`.eslintrc.json`)
+  - [x] Add `npm run lint` script to `package.json`
+  - [ ] Fix all ESLint warnings in `server.js`
+  - [ ] Add Prettier for code formatting
+  - [ ] Add pre-commit hooks with Husky
+  - [ ] Add lint-staged for incremental linting
+  - [ ] Update CI/CD to fail on lint errors (remove `continue-on-error`)
+
+#### Bonus Features (Security & Quality)
+- [ ] Add OWASP dependency check to CI/CD
+- [ ] Implement Content Security Policy (CSP) headers
+- [ ] Add rate limiting with `express-rate-limit`
+- [ ] Add API key authentication for admin endpoints
+- [ ] Implement RBAC in Kubernetes (ServiceAccounts + Roles)
+- [ ] Add Snyk or Dependabot for automated dependency updates
+
+#### Verification Checklist
+- [ ] No secrets in git repository or Docker images
+- [ ] All unit tests passing with >80% coverage
+- [ ] ESLint runs clean (0 errors)
+- [ ] CI/CD pipeline includes lint + test + coverage steps
+- [ ] Secret rotation documented and tested
+- [ ] Security scan passes with 0 critical/high vulnerabilities
+
+---
+
 ### 📊 Timeline & Effort Breakdown
 
 | Phase | Duration | Effort Level | Prerequisite | Cost |
@@ -829,13 +982,15 @@ System Health Dashboard (7 panels) - Bonus
 | **Phase 7: Terraform IaC** | 3–5 days | Medium | AWS basics | $0 |
 | **Phase 8: GitOps ArgoCD** | 3–5 days | Medium | Git/GitHub, K8s ✓ | $0 |
 | **Phase 9: PostgreSQL in K8s** | 3–5 days | Medium | SQL basics | $0 |
-| **GRAND TOTAL** | **6–8 weeks** | **High** | — | **~$1–3/month** |
+| **Phase 10: Observability Stack** | 5–7 days | Medium-High | Prometheus/Grafana ✓ | $0 |
+| **Phase 11: Security & Quality** | 3–5 days | Medium | Node.js, K8s ✓ | $0 |
+| **GRAND TOTAL** | **8–11 weeks** | **High** | — | **~$1–3/month** |
 
 ---
 
 ### 💡 Learning Outcomes Per Phase
 
-**Phase 5 - Kubernetes:** Container orchestration, service discovery, persistence, health checks, scaling, stateful applications
+**Phase 5 - Kubernetes:** Container orchestration, service discovery, persistence, health checks, scaling, Helm packaging, Ingress routing, network policies
 
 **Phase 6 - AWS:** Cloud infrastructure, EC2 deployment, security groups, free tier optimization, cost tracking, public services
 
@@ -845,13 +1000,17 @@ System Health Dashboard (7 panels) - Bonus
 
 **Phase 9 - PostgreSQL:** Database migration, connection pooling, Kubernetes StatefulSets, database backups, performance optimization, enterprise scalability
 
+**Phase 10 - Observability:** Centralized logging (Loki), distributed tracing (OpenTelemetry + Jaeger), SLOs/SLIs, error budgets, three pillars of observability
+
+**Phase 11 - Security & Quality:** Secrets management (Vault/Sealed Secrets), automated testing (Jest), code quality (ESLint/Prettier), security scanning, RBAC
+
 ---
 
-### 🎯 Final Achievement Summary (After Phase 5–9)
+### 🎯 Final Achievement Summary (After Phase 5–11)
 
-After completing Phases 5–9, you will have demonstrated:
+After completing Phases 5–11, you will have demonstrated:
 
-✅ **Container Orchestration:** Kubernetes cluster running locally and on AWS (225 req/sec throughput)
+✅ **Container Orchestration:** Kubernetes cluster with Helm charts, Ingress routing, network policies, HPA (225 req/sec throughput)
 
 ✅ **Cloud Infrastructure:** AWS EC2, S3, IAM, free tier optimization, cost tracking (< $3/month)
 
@@ -861,27 +1020,32 @@ After completing Phases 5–9, you will have demonstrated:
 
 ✅ **Database Management:** PostgreSQL migration from SQLite with zero data loss, running in Kubernetes, backups to S3, connection pooling
 
+✅ **Full Observability:** Three pillars — metrics (Prometheus), logs (Loki), traces (OpenTelemetry/Jaeger) — with SLOs/SLIs and error budgets
+
+✅ **Security Hardening:** Secrets management (Vault/Sealed Secrets), automated testing (>80% coverage), RBAC, network policies, security scanning
+
 ✅ **Production Readiness:** High availability, auto-scaling, disaster recovery with S3 backups, monitoring and alerts
 
-✅ **Enterprise DevOps:** Multi-environment setup, security best practices, cost optimization, observability
-
-✅ **Database Operations:** Managed PostgreSQL in K8s, StatefulSets, replication, performance tuning
+✅ **Enterprise DevOps:** Multi-environment setup, security best practices, cost optimization, complete observability stack
 
 ---
 
-### 📈 Resume Statement (After Phase 5–9)
+### 📈 Resume Statement (After Phase 5–11)
 
-"Architected and deployed a production-ready URL shortener service on Kubernetes using GitOps (ArgoCD), Infrastructure as Code (Terraform), PostgreSQL database running in Kubernetes, and complete observability with Prometheus and Grafana. Migrated 3,896+ URLs from SQLite to PostgreSQL with zero downtime and zero data loss. Implemented automated deployments from Git, zero-downtime updates, connection pooling, and disaster recovery with S3 backups. System achieves 225 req/sec throughput, 99.93% uptime, 100ms P95 latency, and handles 75 concurrent users while maintaining sub-$3/month costs within AWS free tier. Demonstrated mastery of container orchestration, cloud infrastructure, IaC, GitOps, database migration, and Kubernetes operations."
+"Architected and deployed a production-ready URL shortener service on Kubernetes using GitOps (ArgoCD), Infrastructure as Code (Terraform), and complete three-pillar observability (Prometheus metrics, Grafana Loki logs, OpenTelemetry traces). Migrated from SQLite to PostgreSQL with zero downtime. Implemented Helm chart packaging, Ingress routing, network policies, secrets management (Sealed Secrets/Vault), and automated testing with >80% code coverage. Defined and tracked SLOs/SLIs with error budgets in Grafana. System achieves 225 req/sec throughput, 99.93% uptime, 100ms P95 latency, and handles 75 concurrent users while maintaining sub-$3/month costs within AWS free tier. Demonstrated mastery of container orchestration, cloud infrastructure, IaC, GitOps, observability, security hardening, and SRE practices."
 
 ---
 
 ### ⚠️ Key Checkpoints (Don't Skip!)
 
-- [ ] **Phase 5:** Can deploy to local K8s and access all services (kubectl working)
+- [x] **Phase 5:** Can deploy to local K8s and access all services (kubectl working)
+- [ ] **Phase 5 Advanced:** Helm chart installs cleanly, Ingress routes all services, network policies block unauthorized traffic
 - [ ] **Phase 6:** Can access URL shortener from real AWS IP (internet-facing, 225 req/sec verified)
 - [ ] **Phase 7:** Can destroy and recreate entire infrastructure (terraform destroy → terraform apply)
 - [ ] **Phase 8:** Can make Git commit and see automatic deployment (no manual kubectl apply needed)
 - [ ] **Phase 9:** Can migrate 3,896+ URLs from SQLite to PostgreSQL in K8s (zero data loss, performance verified, backups working)
+- [ ] **Phase 10:** Can query logs in Grafana (Loki), view traces in Jaeger, and see SLO error budget dashboard
+- [ ] **Phase 11:** No secrets in git, all tests passing with >80% coverage, ESLint clean, security scan green
 
 ---
 
@@ -1882,46 +2046,67 @@ histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
 ```
 url-shortener/
 ├── backend/
-│   ├── src/
-│   │   ├── app.js              # Express app configuration
-│   │   ├── database.js         # SQLite connection
-│   │   ├── metrics.js          # Prometheus metrics
-│   │   ├── routes/
-│   │   │   ├── api.js          # API routes
-│   │   │   └── redirect.js     # Redirect handler
-│   │   └── utils/
-│   │       ├── validation.js   # URL validation
-│   │       └── generator.js    # Short code generation
-│   ├── Dockerfile
+│   ├── server.js              # Main application (API + DB + metrics + routes)
+│   ├── Dockerfile             # Multi-stage build (builder → production)
+│   ├── .eslintrc.json         # ESLint configuration
+│   ├── .dockerignore
 │   ├── package.json
-│   └── .dockerignore
+│   └── package-lock.json
 ├── frontend/
-│   ├── index.html
-│   ├── css/
-│   │   └── styles.css
-│   ├── js/
-│   │   └── app.js
+│   ├── index.html             # URL shortener UI + metrics dashboard
+│   ├── app.js                 # Frontend logic (shortening, bulk, metrics)
+│   ├── styles.css             # Responsive styling (15KB)
+│   ├── nginx.conf             # Reverse proxy configuration
 │   └── Dockerfile
-├── monitoring/
-│   ├── prometheus/
-│   │   └── prometheus.yml
-│   └── grafana/
-│       ├── provisioning/
-│       │   ├── datasources/
-│       │   └── dashboards/
-│       └── dashboards/
-│           ├── main.json
-│           ├── analytics.json
-│           └── health.json
-├── scripts/
+├── prometheus/
+│   └── prometheus.yml         # Scrape config + alert rules reference
+├── grafana/
+│   ├── dashboards/            # JSON dashboard definitions (3 dashboards)
+│   └── provisioning/          # Auto-provisioning (datasources + dashboards)
+├── ai-reporter/
+│   ├── report-generator.js    # AI-powered PDF report generator
+│   ├── Dockerfile
+│   └── package.json
+├── k8s/                       # Kubernetes manifests (Phase 5)
+│   ├── 00-namespace.yaml
+│   ├── 01-configmaps.yaml
+│   ├── 02-volumes.yaml
+│   ├── 03-backend-deployment.yaml
+│   ├── 04-frontend-deployment.yaml
+│   ├── 05-prometheus-deployment.yaml
+│   ├── 06-grafana-deployment.yaml
+│   ├── 07-ai-reporter-deployment.yaml
+│   ├── 08-hpa.yaml
+│   ├── 09-pdb.yaml
+│   └── 10-cronjobs.yaml
+├── scripts/                   # Automation scripts (9 total)
 │   ├── backup_all.sh
-│   ├── restore.sh
-│   └── load_test.sh
-├── docker-compose.yml
+│   ├── backup_db_quick.sh
+│   ├── restore_all.sh
+│   ├── load_test_quick.sh
+│   ├── create-bonus-dashboards.sh
+│   ├── generate_ai_report.sh
+│   ├── report-generator.sh
+│   ├── check_dashboard_uids.sh
+│   └── test_renderer.sh
+├── postman/
+│   └── URL_Shortener_Collection.json
+├── docs/
+│   ├── completed/             # Weekly docs + guides
+│   │   ├── week1.md - week5.md
+│   │   ├── API_DOCUMENTATION.md
+│   │   ├── USER_MANUAL.md
+│   │   └── AI_REPORTER_GUIDE.md
+│   ├── diagrams/              # Architecture diagram images
+│   └── required/              # Required project PDFs
+├── reports/                   # Generated AI reports (PDF)
 ├── .github/
 │   └── workflows/
-│       └── ci.yml
-└── README.md
+│       └── ci-cd.yml          # CI/CD pipeline (4 active jobs)
+├── docker-compose.yml         # 6 services orchestration
+├── .env.example               # Environment template (safe to commit)
+├── .gitignore
+└── README.md                  # Comprehensive documentation (111KB)
 ```
 
 ---
