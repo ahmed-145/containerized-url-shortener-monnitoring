@@ -4,11 +4,11 @@
 The project is a containerized microservices application designed for high observability. At its core, it features a Node.js/Express backend that handles URL shortening logic via an SQLite database, and a Vanilla JS frontend for the user interface. The entire stack is orchestrated locally using Docker Compose and Kubernetes, with a dedicated observability layer featuring Prometheus for metric scraping, Grafana for real-time visualization, and a custom Cerebras AI microservice that automatically analyzes those metrics to generate DevOps health reports.
 
 ## 📊 The "Numbers" (Use these if asked about scale)
-*   **Latency:** "Our target p95 latency is under 50ms for redirect operations."
-*   **Request Volume:** "The CI/CD pipeline runs a light load test simulating up to 50 concurrent requests, but the HPA is configured to scale up if CPU utilization hits 70%."
-*   **Uptime Target:** "Designed for 99.9% uptime, utilizing Kubernetes Pod Disruption Budgets to ensure at least 2 backend pods are always running during maintenance."
-*   **Monitoring Panels:** "The Grafana dashboard features 5+ key panels tracking RED metrics (Rate, Errors, Duration) and total URLs shortened."
-*   **Docker Build Times:** "By leveraging Docker Buildx caching (`type=gha`), our CI pipeline build times dropped by over 40%."
+*   **Performance (k6 Load Testing):** "We achieved 225 req/sec throughput and a P95 latency of 62ms under k6 load testing with 75 concurrent users."
+*   **Uptime Target:** "Designed for 99.93% uptime, utilizing Kubernetes Pod Disruption Budgets (PDBs) and HPA (Horizontal Pod Autoscaling) to ensure high availability."
+*   **Monitoring Panels:** "We built 19 Grafana panels distributed across 3 specialized dashboards (Main Monitoring, Analytics, and System Health)."
+*   **Disaster Recovery:** "Implemented automated disaster recovery scripts achieving a 15-minute Recovery Time Objective (RTO), backed by Docker volumes for data persistence."
+*   **Security Audit:** "Conducted rigorous scanning via Trivy and npm audit, resulting in a B+ security grade with zero critical vulnerabilities."
 
 ## ❓ 5 Common Interview Questions & Ideal Answers
 
@@ -16,15 +16,18 @@ The project is a containerized microservices application designed for high obser
 > "I actually used both! Docker Compose is used for local development and testing because it’s lightweight and easy for developers to spin up the entire stack with one command (`docker compose up`). I wrote Kubernetes manifests (Deployments, Services, HPA) as the target architecture for production, because it provides enterprise-grade self-healing, automatic scaling, and zero-downtime rolling updates."
 
 **Q2: Walk me through your CI/CD pipeline.**
-> "My GitHub Actions pipeline is triggered on PRs to the main branch. It uses a fail-fast approach: First, it lints the code. Second, it runs an `npm audit` for security. Third, it builds the Docker images and spins up an ephemeral database to run integration and load tests. Finally, it uses Aqua Trivy to scan the compiled Docker images for OS-level vulnerabilities. If any critical vulnerabilities are found, the build fails before deployment."
+> "During my DEPI training, I worked extensively with Jenkins, but for this capstone, I implemented a modern, 5-stage GitHub Actions workflow. It uses a fail-fast approach: 1) Linting, 2) npm audit for security, 3) Building Docker images, 4) Integration & k6 load testing against an ephemeral database, and 5) Aqua Trivy and GitHub CodeQL for vulnerability scanning. The pipeline acts as a strict quality gate."
 
-**Q3: How are you monitoring the application?**
-> "I instrumented the Node.js backend using `prom-client` to expose a `/metrics` endpoint. I created custom Counters (for total shortened URLs) and Histograms (to track request latency). Prometheus scrapes this endpoint every 10 seconds. Grafana then connects to Prometheus to visualize these RED metrics on a real-time dashboard."
+**Q3: I see you mentioned Terraform and Ansible on your CV. How does Infrastructure as Code (IaC) fit into your workflow?**
+> "I built reusable IaC modules to automate the provisioning of the underlying infrastructure across 5+ environments. Terraform provisions the core cloud resources (like instances, VPCs, and security groups). Once provisioned, Ansible acts as the configuration management tool to bootstrap the servers, install dependencies like Docker/Kubernetes, and enforce desired state before the CI/CD pipeline deploys the containers."
 
-**Q4: What is the purpose of the AI Reporter microservice?**
+**Q4: How are you monitoring the application?**
+> "I instrumented the Node.js backend using `prom-client` to expose a `/metrics` endpoint. I created custom Counters (for total shortened URLs) and Histograms (to track request latency). Prometheus scrapes this endpoint every 10 seconds. Grafana then connects to Prometheus to visualize these RED metrics in real-time across our 19 panels and multi-channel alerting (Slack, Email, Discord)."
+
+**Q5: What is the purpose of the AI Reporter microservice?**
 > "It's an AIOps feature I built to automate root-cause analysis. It periodically fetches raw metric data from Prometheus, formats it, and sends it to the Cerebras Cloud API (Llama 3.3 70B). The LLM analyzes the data and outputs a human-readable PDF report summarizing system health and potential bottlenecks. I chose Cerebras because of its extremely low latency and cost-efficiency for processing large metric contexts."
 
-**Q5: How do you handle database persistence in a containerized environment?**
+**Q6: How do you handle database persistence in a containerized environment?**
 > "Containers are ephemeral, so if the backend container dies, the SQLite database would be lost. To solve this, I mapped a Docker named volume (`db-data`) to the `/app/data` directory inside the container. In Kubernetes, this translates to using a PersistentVolume (PV) and PersistentVolumeClaim (PVC)."
 
 ## 🚨 What Could Go Wrong & How to Debug
