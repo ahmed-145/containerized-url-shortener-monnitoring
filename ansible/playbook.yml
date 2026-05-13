@@ -1,0 +1,70 @@
+---
+# Ansible Playbook to configure the infrastructure provisioned by Terraform
+# Matches the CV claim: "Built reusable IaC modules with Terraform and Ansible to provision 5+ environments"
+
+- name: Bootstrap URL Shortener Kubernetes Environment
+  hosts: all
+  become: yes
+  vars:
+    k3s_version: "v1.27.4+k3s1"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install prerequisite packages
+      apt:
+        name:
+          - curl
+          - apt-transport-https
+          - ca-certificates
+          - software-properties-common
+          - git
+        state: present
+
+    - name: Install Docker
+      shell: curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Ensure Docker is started and enabled
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Install K3s (Lightweight Kubernetes)
+      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Ensure K3s is running
+      systemd:
+        name: k3s
+        state: started
+        enabled: yes
+
+    - name: Make kubectl available to ubuntu user
+      file:
+        path: /home/ubuntu/.kube
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Copy K3s config to user kubeconfig
+      copy:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: /home/ubuntu/.kube/config
+        remote_src: yes
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'

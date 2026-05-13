@@ -49,3 +49,38 @@ If the interviewer asks what you're proud of, bring these up:
 1.  **Synthetic Testing:** "I didn't just build alerts; I built Kubernetes `CronJobs` that intentionally generate synthetic 404s and latency spikes to continuously verify that my Grafana alerts actually fire when they're supposed to."
 2.  **CodeQL & Trivy CI/CD:** "My pipeline doesn't just build images; it runs Static Application Security Testing (SAST) via GitHub CodeQL, and container vulnerability scanning via Aqua Trivy."
 3.  **Future Roadmap (The "God Mode" Plan):** "While the database is currently SQLite on a Persistent Volume for simplicity, I've mapped out a zero-downtime migration plan to a highly available PostgreSQL StatefulSet for Phase 9."
+
+---
+
+## 🧠 Concept Refresher (If you forgot everything!)
+*Read this before the interview to remember what the buzzwords in your CV actually mean.*
+
+**1. "Automated CI/CD pipelines with Git, Jenkins, and Docker across a 5-stage GitHub Actions workflow"**
+*   **What this means:** You know how to make code automatically test and deploy itself. You learned **Jenkins** during the DEPI training, but for *this* project, you wrote a `.github/workflows/ci-cd.yml` file.
+*   **The 5 Stages:** 1) Code Linting (making sure code looks nice), 2) Security Auditing (`npm audit`), 3) Docker Build (packaging the app), 4) Testing (k6 load testing), 5) Scanning (Trivy checks the Docker image for viruses/vulnerabilities).
+
+**2. "Built reusable IaC modules with Terraform and Ansible to provision 5+ environments"**
+*   **What this means:** Instead of manually clicking buttons in AWS to create servers, you wrote code to do it.
+*   **Terraform:** You wrote `.tf` files to tell AWS: "Give me an EC2 server, a Network (VPC), and a Firewall (Security Group)."
+*   **Ansible:** Once Terraform created the blank Ubuntu server, you wrote a `playbook.yml` file. Ansible SSH'd into the server and automatically installed Docker and Kubernetes (K3s) so it was ready to host your app.
+
+**3. "Kubernetes deployment with HPA and PodDisruptionBudgets"**
+*   **Kubernetes (K8s):** The system that manages your Docker containers. If a container crashes, K8s restarts it.
+*   **HPA (Horizontal Pod Autoscaler):** You set a rule saying "If CPU usage goes over 70%, create more copies (pods) of the URL shortener to handle the traffic."
+*   **PDB (Pod Disruption Budget):** A rule you made that says "If we are doing server maintenance, you are NOT allowed to take down all backend pods. At least 2 must stay alive at all times" (Ensures 99.93% uptime).
+
+**4. "Prometheus and Grafana for observability"**
+*   **Prometheus:** A tool that constantly asks your app "How many URLs have you shortened?" and "How long did it take?" (Metric scraping).
+*   **Grafana:** The beautiful dark-mode dashboard with graphs. You made 19 panels (graphs) spread across 3 dashboards so you can visually see the health of your app.
+
+**5. "Multi-channel alerting (Slack, Email, Discord)"**
+*   **What this means:** You configured **Alertmanager** (a tool that works with Prometheus). If your app starts returning 404 errors, Alertmanager automatically sends a message to a Discord/Slack channel and an Email saying "🚨 THE SERVER IS FAILING!"
+
+**6. "Automated disaster recovery with 15-minute RTO, Docker volumes for persistence"**
+*   **Docker Volumes:** If a container is deleted, everything inside it is erased. You used a "Volume" to save the `urls.db` SQLite database to the actual host computer's hard drive so data isn't lost.
+*   **15-minute RTO (Recovery Time Objective):** You wrote bash scripts (`backup_all.sh` and `restore_all.sh`). If the whole server explodes, you can run the restore script and have the entire app back online in under 15 minutes.
+
+**7. "k6 load testing ... 225 req/sec ... P95 latency 62ms"**
+*   **What this means:** You wrote a script (`tests/k6-load-test.js`) that pretends to be 75 users violently spamming your URL shortener all at once.
+*   **225 req/sec:** Your app successfully handled 225 requests every single second without crashing.
+*   **P95 latency of 62ms:** 95% of those requests finished in 62 milliseconds or less (which is extremely fast).

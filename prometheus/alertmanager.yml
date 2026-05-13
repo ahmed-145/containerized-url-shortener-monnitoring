@@ -1,0 +1,38 @@
+global:
+  resolve_timeout: 5m
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alertmanager@yourdomain.com'
+  smtp_auth_username: 'alertmanager@yourdomain.com'
+  smtp_auth_password: 'app-password'
+
+route:
+  group_by: ['alertname', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: 'multi-channel-receiver'
+
+receivers:
+  - name: 'multi-channel-receiver'
+    slack_configs:
+      - channel: '#devops-alerts'
+        send_resolved: true
+        title: '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }}'
+        text: >-
+          {{ range .Alerts -}}
+          *Alert:* {{ .Annotations.summary }}{{ if .Labels.severity }} - `{{ .Labels.severity }}`{{ end }}
+          *Description:* {{ .Annotations.description }}
+          *Details:*
+            {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+            {{ end }}
+          {{ end }}
+    
+    email_configs:
+      - to: 'oncall-team@yourdomain.com'
+        send_resolved: true
+
+    webhook_configs:
+      # Discord via webhook
+      - url: 'https://discord.com/api/webhooks/YOUR/DISCORD/WEBHOOK'
+        send_resolved: true
