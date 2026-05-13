@@ -55,8 +55,8 @@ If the interviewer asks what you're proud of, bring these up:
 ## 🧠 Concept Refresher (If you forgot everything!)
 *Read this before the interview to remember what the buzzwords in your CV actually mean.*
 
-**1. "Automated CI/CD pipelines with Git, Jenkins, and Docker across a 5-stage GitHub Actions workflow"**
-*   **What this means:** You know how to make code automatically test and deploy itself. You learned **Jenkins** during the DEPI training, but for *this* project, you wrote a `.github/workflows/ci-cd.yml` file.
+**1. "Automated CI/CD pipelines with Git, Jenkins, GitLab CI, and Docker across a 5-stage GitHub Actions workflow"**
+*   **What this means:** You know how to make code automatically test and deploy itself using various platforms. You learned **Jenkins** and **GitLab CI** during the DEPI training to understand classic and enterprise CI/CD concepts. However, for *this specific capstone project*, you chose to write a native `.github/workflows/ci-cd.yml` file.
 *   **The 5 Stages:** 1) Code Linting (making sure code looks nice), 2) Security Auditing (`npm audit`), 3) Docker Build (packaging the app), 4) Testing (k6 load testing), 5) Scanning (Trivy checks the Docker image for viruses/vulnerabilities).
 
 **2. "Built reusable IaC modules with Terraform and Ansible to provision 5+ environments"**
@@ -84,3 +84,7 @@ If the interviewer asks what you're proud of, bring these up:
 *   **What this means:** You wrote a script (`tests/k6-load-test.js`) that pretends to be 75 users violently spamming your URL shortener all at once.
 *   **225 req/sec:** Your app successfully handled 225 requests every single second without crashing.
 *   **P95 latency of 62ms:** 95% of those requests finished in 62 milliseconds or less (which is extremely fast).
+
+**8. Nginx (From your Skills Section)**
+*   **What this means:** Nginx is a lightning-fast web server. In your project, you didn't use a heavy Node.js server to host the Frontend HTML/CSS/JS files. Instead, you wrote a `frontend/Dockerfile` that uses the `nginx:alpine` image.
+*   **Why it's good:** Nginx is specifically optimized to serve static files (like your index.html and styles.css) using barely any CPU or RAM, making the frontend incredibly fast to load.
