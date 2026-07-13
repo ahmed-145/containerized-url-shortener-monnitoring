@@ -211,6 +211,8 @@ jobs:
       - name: Collect logs
         if: failure()
         run: |
+          echo "=== DOCKER COMPOSE LOGS ==="
+          docker compose logs
           docker compose logs > docker-logs.txt
 
       - name: Upload logs
