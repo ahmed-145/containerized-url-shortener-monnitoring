@@ -107,6 +107,7 @@ services:
       - GF_SECURITY_ALLOW_EMBEDDING=true
       - GF_SECURITY_COOKIE_SAMESITE=none
       - GF_USERS_DEFAULT_THEME=dark
+      - GF_RENDERING_RENDERER_TOKEN=url_shortener_render_token_2026_xyz
     ports:
       - "3001:3000"
     volumes:
@@ -138,6 +139,7 @@ services:
     environment:
       - ENABLE_METRICS=true
       - HTTP_HOST=0.0.0.0
+      - AUTH_TOKEN=url_shortener_render_token_2026_xyz
     ports:
       - "8081:8081"
     networks:
