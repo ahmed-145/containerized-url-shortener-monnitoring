@@ -257,7 +257,7 @@ jobs:
         continue-on-error: true  # Don't fail if upload fails
 
   # ============================================
-  # PRODUCTION DEPLOYMENT JOBS (COMMENTED OUT)
+  # PRODUCTION DEPLOYMENT JOBS
   # ============================================
   # Note: These jobs are ready for production but disabled for demo purposes.
   # Uncomment and configure secrets when deploying to a real server.

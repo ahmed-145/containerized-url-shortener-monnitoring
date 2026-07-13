@@ -183,9 +183,15 @@ app.use((req, res, next) => {
     // Calculate duration in seconds
     const duration = (Date.now() - start) / 1000;
 
+    // Normalize path to prevent cardinality explosion (especially for 404 lookups of random paths)
+    let routePath = req.route?.path || req.path;
+    if (!req.route && routePath.match(/^\/[a-zA-Z0-9-_]{2,20}$/)) {
+      routePath = '/:shortCode';
+    }
+
     // Record latency
     requestLatencyHistogram
-      .labels(req.method, req.route?.path || req.path, res.statusCode)
+      .labels(req.method, routePath, res.statusCode)
       .observe(duration);
 
     // Decrement active connections
@@ -197,6 +203,91 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// ==========================================
+// IN-MEMORY CACHE & CLICK TRACKING BUFFERS
+// ==========================================
+
+const urlCache = new Map();
+const CACHE_MAX_SIZE = 10000;
+
+function cacheGet(shortCode) {
+  return urlCache.get(shortCode);
+}
+
+function cacheSet(shortCode, originalUrl) {
+  if (urlCache.size >= CACHE_MAX_SIZE) {
+    // Basic FIFO eviction to prevent memory explosion
+    const firstKey = urlCache.keys().next().value;
+    urlCache.delete(firstKey);
+  }
+  urlCache.set(shortCode, originalUrl);
+}
+
+function cacheDelete(shortCode) {
+  urlCache.delete(shortCode);
+}
+
+const clickBuffer = new Map();
+
+function bufferClick(shortCode) {
+  const current = clickBuffer.get(shortCode) || 0;
+  clickBuffer.set(shortCode, current + 1);
+}
+
+function flushClicks() {
+  if (clickBuffer.size === 0) return;
+
+  const batch = Array.from(clickBuffer.entries());
+  clickBuffer.clear();
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+    const stmt = db.prepare('UPDATE urls SET clicks = clicks + ? WHERE short_code = ?');
+    for (const [code, count] of batch) {
+      stmt.run(count, code);
+    }
+    stmt.finalize();
+    db.run('COMMIT', (err) => {
+      if (err) {
+        console.error('Failed to commit click updates batch:', err);
+        // Re-buffer them on error
+        for (const [code, count] of batch) {
+          const current = clickBuffer.get(code) || 0;
+          clickBuffer.set(code, current + count);
+        }
+      }
+    });
+  });
+}
+
+// Flush click buffer every 5 seconds
+setInterval(flushClicks, 5000);
+
+function flushClicksSync(callback) {
+  if (clickBuffer.size === 0) {
+    if (callback) callback();
+    return;
+  }
+
+  const batch = Array.from(clickBuffer.entries());
+  clickBuffer.clear();
+
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+    const stmt = db.prepare('UPDATE urls SET clicks = clicks + ? WHERE short_code = ?');
+    for (const [code, count] of batch) {
+      stmt.run(count, code);
+    }
+    stmt.finalize();
+    db.run('COMMIT', (err) => {
+      if (err) {
+        console.error('Failed to flush clicks on shutdown:', err);
+      }
+      if (callback) callback();
+    });
+  });
+}
 
 // ==========================================
 // DATABASE SETUP
@@ -214,6 +305,21 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
     process.exit(1);
   }
   console.log('Connected to SQLite database');
+
+  // Enable WAL mode, NORMAL synchronous mode, and busy timeout
+  db.serialize(() => {
+    db.run('PRAGMA journal_mode = WAL', (err) => {
+      if (err) console.error('Failed to set WAL journal mode:', err);
+      else console.log('SQLite WAL mode enabled');
+    });
+    db.run('PRAGMA synchronous = NORMAL', (err) => {
+      if (err) console.error('Failed to set synchronous NORMAL:', err);
+      else console.log('SQLite synchronous mode set to NORMAL');
+    });
+    db.run('PRAGMA busy_timeout = 5000', (err) => {
+      if (err) console.error('Failed to set busy timeout:', err);
+    });
+  });
 });
 
 // Create table
@@ -511,6 +617,9 @@ app.post('/api/shorten', async (req, res) => {
           return res.status(500).json({ error: 'Failed to create short URL' });
         }
 
+        // Populate cache
+        cacheSet(shortCode, url);
+
         // Increment URLs shortened counter
         urlsShortenedCounter.inc();
 
@@ -595,6 +704,11 @@ app.delete('/api/urls/:shortCode', (req, res) => {
     if (this.changes === 0) {
       return res.status(404).json({ error: 'Short URL not found' });
     }
+    
+    // Invalidate cache and buffer
+    cacheDelete(shortCode);
+    clickBuffer.delete(shortCode);
+
     res.json({ success: true, message: 'URL deleted successfully' });
   });
 });
@@ -681,6 +795,9 @@ app.post('/api/bulk-shorten', upload.single('file'), async (req, res) => {
           function (err) {
             if (err) reject(err);
             else {
+              // Populate cache
+              cacheSet(shortCode, url);
+
               // Increment URLs shortened counter for each successful bulk operation
               urlsShortenedCounter.inc();
 
@@ -759,6 +876,18 @@ app.get('/api/qr/:shortCode', async (req, res) => {
 app.get('/:shortCode', (req, res) => {
   const { shortCode } = req.params;
 
+  // 1. Check in-memory cache first
+  const cachedUrl = cacheGet(shortCode);
+  if (cachedUrl) {
+    // Increment counters
+    successfulRedirectsCounter.inc();
+    bufferClick(shortCode);
+
+    // Redirect immediately
+    return res.redirect(301, cachedUrl);
+  }
+
+  // 2. Cache miss, query database
   db.get(
     'SELECT * FROM urls WHERE short_code = ?',
     [shortCode],
@@ -774,14 +903,14 @@ app.get('/:shortCode', (req, res) => {
         return res.status(404).send('URL not found');
       }
 
+      // Populate cache
+      cacheSet(shortCode, row.original_url);
+
       // Increment successful redirects counter
       successfulRedirectsCounter.inc();
 
-      // Increment click counter
-      db.run(
-        'UPDATE urls SET clicks = clicks + 1 WHERE short_code = ?',
-        [shortCode]
-      );
+      // Buffer click count update
+      bufferClick(shortCode);
 
       // Redirect
       res.redirect(301, row.original_url);
@@ -803,10 +932,22 @@ app.use((err, req, res, next) => {
 // ==========================================
 
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received, closing database...');
-  db.close(() => {
-    console.log('Database closed');
-    process.exit(0);
+  console.log('SIGTERM received, flushing clicks and closing database...');
+  flushClicksSync(() => {
+    db.close(() => {
+      console.log('Database closed');
+      process.exit(0);
+    });
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, flushing clicks and closing database...');
+  flushClicksSync(() => {
+    db.close(() => {
+      console.log('Database closed');
+      process.exit(0);
+    });
   });
 });
 

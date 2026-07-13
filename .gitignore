@@ -33,3 +33,10 @@ Thumbs.db
 # Editor and IDE settings (optional but smart)
 .vscode/
 .idea/
+
+# Database and runtime files
+backend/data/
+data/
+*.db
+*.db-wal
+*.db-shm
