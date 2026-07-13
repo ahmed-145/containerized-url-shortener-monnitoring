@@ -660,8 +660,13 @@ app.get('/api/urls', (req, res) => {
           return res.status(500).json({ error: 'Database error' });
         }
 
+        const enrichedRows = rows.map(row => ({
+          ...row,
+          clicks: row.clicks + (clickBuffer.get(row.short_code) || 0)
+        }));
+
         res.json({
-          urls: rows,
+          urls: enrichedRows,
           pagination: {
             page,
             limit,
@@ -688,7 +693,11 @@ app.get('/api/stats/:shortCode', (req, res) => {
       if (!row) {
         return res.status(404).json({ error: 'Short URL not found' });
       }
-      res.json(row);
+      const enrichedRow = {
+        ...row,
+        clicks: row.clicks + (clickBuffer.get(shortCode) || 0)
+      };
+      res.json(enrichedRow);
     }
   );
 });
