@@ -15,10 +15,13 @@ groups:
             relativeTimeRange:
               from: 300
               to: 0
-            datasourceUid: PBFA97CFB590B2093
+            datasourceUid: prometheus
             model:
               expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.1
               refId: A
+              datasource:
+                type: prometheus
+                uid: prometheus
         noDataState: NoData
         execErrState: Error
         for: 2m
@@ -38,15 +41,18 @@ groups:
             relativeTimeRange:
               from: 300
               to: 0
-            datasourceUid: PBFA97CFB590B2093
+            datasourceUid: prometheus
             model:
               expr: rate(failed_lookups_total[5m]) / (rate(successful_redirects_total[5m]) + rate(failed_lookups_total[5m])) > 0.05
               refId: A
+              datasource:
+                type: prometheus
+                uid: prometheus
         noDataState: NoData
         execErrState: Error
         for: 2m
         annotations:
-          description: '404 error rate is {{ $value | humanizePercentage }} (threshold: 5%)'
+          description: '404 error rate is above threshold (5%)'
           summary: Failed URL lookups exceed 5% of total requests for more than 2 minutes
         labels:
           severity: warning
