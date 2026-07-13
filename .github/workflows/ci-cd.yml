@@ -135,7 +135,11 @@ jobs:
       - name: Start services
         run: |
           sudo chmod -R 777 grafana prometheus reports
-          docker compose up -d
+          if ! docker compose up -d; then
+            echo "=== DOCKER COMPOSE UP FAILED ==="
+            docker compose logs
+            exit 1
+          fi
           echo "Waiting for services to be healthy..."
           sleep 30
 
